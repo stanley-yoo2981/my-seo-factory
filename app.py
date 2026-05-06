@@ -5,26 +5,26 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-# 1. 프로젝트 경로 및 API 강제 연결 (PDF 원본 로직 100% 복구)
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__)) [cite: 17]
+# 1. 프로젝트 경로 및 API 연결 (PDF 원본 로직 100% 복원)
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(PROJECT_DIR, ".env")
 
 if os.path.exists(env_path):
-    load_dotenv(env_path) [cite: 19-20]
+    load_dotenv(env_path)
 else:
-    # 깃허브 서버(Streamlit Cloud) 환경일 때 Secrets 금고에서 키를 강제 주입
+    # 깃허브 서버(Streamlit Cloud) 환경일 때 Secrets 금고에서 키를 강제로 가져옵니다.
     try:
         for key, value in st.secrets.items():
-            os.environ[key] = str(value) [cite: 22-23]
+            os.environ[key] = str(value)
     except:
         pass
 
-# 주요 파일 경로 정의 [cite: 24-25]
+# 주요 파일 경로 정의
 CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
 KEYWORD_SCRIPT = os.path.join(PROJECT_DIR, "keyword_research.py")
 PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 
-# 2. 페이지 설정 (파비콘: ⚖️ 저울) [cite: 26-30]
+# 2. 페이지 설정 (파비콘: ⚖️ 저울)
 st.set_page_config(
     page_title="SEO 자동화 공장 Pro",
     page_icon="⚖️", 
@@ -32,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 3. Apple Pro Studio Ultra-Premium CSS (애니메이션 & 시인성 강화)
+# 3. Apple Pro Studio Ultra-Premium CSS (애니메이션 & 유리 질감)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
@@ -48,17 +48,17 @@ st.markdown("""
         --glass-white: rgba(255, 255, 255, 0.45);
         --glass-border: rgba(255, 255, 255, 0.8);
         --titanium-black: #1D1D1F;
-    } [cite: 37-44]
+    }
 
     html, body, [data-testid="stAppViewContainer"] {
         background: var(--bg-apple) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
-    } [cite: 46-50]
+    }
 
     [data-testid="stMainBlockContainer"] {
         padding: 80px 100px !important;
         animation: studioReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    } [cite: 56-58]
+    }
 
     /* Bento Card 디자인 */
     .studio-card {
@@ -75,13 +75,13 @@ st.markdown("""
         align-items: center !important;
         justify-content: center !important;
         min-height: 350px !important;
-    } [cite: 96-111]
+    }
 
     .studio-card:hover {
         background: rgba(255, 255, 255, 0.65) !important;
         box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12) !important;
         transform: translateY(-8px) scale(1.02) !important;
-    } [cite: 112-115]
+    }
 
     /* 티타늄 블랙 버튼 */
     button[kind="primary"] {
@@ -94,9 +94,9 @@ st.markdown("""
         width: 100% !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
         border: none !important;
-    } [cite: 124-136]
+    }
 
-    /* 가이드 박스 */
+    /* 매뉴얼 가이드 박스 */
     .guide-box {
         background: #ffffff !important;
         border-radius: 40px !important;
@@ -104,6 +104,7 @@ st.markdown("""
         margin-top: 60px !important;
         color: #1d1d1f !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03) !important;
+        border: 1px solid rgba(0,0,0,0.05) !important;
     }
 
     pre, code {
@@ -111,13 +112,13 @@ st.markdown("""
         color: #f5f5f7 !important;
         border-radius: 20px !important;
         padding: 24px !important;
-    } [cite: 203-211]
+    }
 
-    [data-baseweb="tab-list"] { display: none !important; } [cite: 81-86]
+    [data-baseweb="tab-list"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. API 연결 상태 확인 [cite: 268-276]
+# 4. API 연결 상태 확인
 naver_ok = bool(os.getenv("NAVER_AD_ACCESS_KEY") and os.getenv("NAVER_AD_SECRET_KEY") and os.getenv("NAVER_AD_CUSTOMER_ID"))
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
 wp_ok = bool(os.getenv("WP_URL") and os.getenv("WP_USERNAME") and os.getenv("WP_PASSWORD"))
@@ -130,8 +131,8 @@ with st.sidebar:
     st.divider()
     images_enabled = st.checkbox("AI 이미지 생성 모드", value=False)
 
-# 5. subprocess 실시간 스트리밍 엔진 (원본 로직 100% 복원) [cite: 295-317]
-def stream_subprocess(cmd: list, env_extra: dict, log_placeholder, max_lines=1000):
+# 5. subprocess 실시간 스트리밍 엔진 (원본 로직 100% 복구)
+def stream_subprocess(cmd, env_extra, log_placeholder, max_lines=1000):
     env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"}
     buffer = []
     try:
@@ -149,13 +150,13 @@ def stream_subprocess(cmd: list, env_extra: dict, log_placeholder, max_lines=100
         log_placeholder.error(f"실행 실패: {e}")
         return -1, []
 
-# 6. 메인 UI 조종석 [cite: 318-380]
+# 6. 메인 UI 조종석
 st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; font-weight: 600; margin-bottom: 60px; letter-spacing: -2px;'>SEO 자동화 공장 Pro</h1>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
-    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">키워드 분석</div><p style="color: #86868b; text-align: center;">수익성 높은 키워드를<br>자동으로 발굴합니다</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">키워드 분석</div><p style="color: #86868b; text-align: center;">네이버 검색 데이터를 기반으로<br>수익성 높은 키워드를 발굴합니다</p></div>', unsafe_allow_html=True)
     if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
         with st.status("분석 중...", expanded=True) as status:
             log_box = st.empty()
@@ -163,7 +164,7 @@ with col1:
             if rc == 0: status.update(label="분석 완료", state="complete")
 
 with col2:
-    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 본문을 작성하고<br>임시글로 발행합니다</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 독창적인 법률 본문을 작성하고<br>워드프레스에 임시글로 발행합니다</p></div>', unsafe_allow_html=True)
     if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
         env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"}
         with st.status("생성 중...", expanded=True) as status:
@@ -176,7 +177,6 @@ with col3:
     if st.button("데이터 보기", key="btn_view", type="primary", use_container_width=True):
         st.session_state.show_data = True
 
-# 데이터 뷰 섹션 [cite: 381-400]
 if st.session_state.get("show_data", False):
     st.divider()
     if os.path.exists(CSV_PATH):
@@ -185,21 +185,17 @@ if st.session_state.get("show_data", False):
         c1.metric("발굴 키워드", f"{len(df)}개")
         c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}")
         c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}")
-        c4.metric("카테고리 수", df['seed'].nunique() if 'seed' in df.columns else 0)
+        c4.metric("시드 카테고리", df['seed'].nunique() if 'seed' in df.columns else 0)
         st.dataframe(df, use_container_width=True, height=450)
 
-# ==========================================================
-# 7. 사장님표 실무자 인수인계 매뉴얼 (루트 경로 반영)
-# ==========================================================
+# 7. 사장님표 실무자 인수인계 매뉴얼
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.markdown("<h2 style='text-align: center; margin-bottom: 60px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-bottom: 50px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>", unsafe_allow_html=True)
 
-# Step 1
 st.subheader("1. 워드프레스 임시글 확인 및 진입")
 st.write("포스팅 생성 완료 후, 관리자 페이지의 [글] > [모든 글] 메뉴로 접속하여 임시글 제목을 클릭합니다.")
 st.image("step1.png", use_container_width=True)
 
-# Step 2
 st.subheader("2. 과장님 검수 / RankMath SEO 설정 (중요)")
 st.markdown("#### **1) 스니펫 편집**")
 st.info("**제미나이 프롬프트:** \"스니펫 편집에 필요한 제목, 퍼머링크, 설명(160자 이내)을 구글 SEO, AEO에 가장 최적화 하여 알려줘.\"")
@@ -207,13 +203,12 @@ st.image(["step2.png", "step2-1.png"], use_container_width=True)
 
 st.markdown("#### **2) 포커스 키워드**")
 st.write("제목의 첫 번째 키워드를 포커스 키워드 란에 삽입합니다.")
-st.image("step2.png", use_container_width=True) # step2-2 대신 활용
+st.image("step2.png", use_container_width=True)
 
 st.markdown("#### **3) Rank Math 체크리스트 최적화**")
 st.write("기본 SEO 항목들이 초록색 체크표시(v)가 되도록 보완하세요. 80점 이상 권장합니다.")
 st.image(["step2-3.png", "step2-4.png"], use_container_width=True)
 
-# Step 3
 st.subheader("3. 공개 일정 예약 및 발행")
 st.warning("**전략:** 하루 10개 즉시 업로드 + 나머지 10개는 매일 오전 9시 예약 발행")
 col_a, col_b = st.columns(2)

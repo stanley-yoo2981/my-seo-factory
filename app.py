@@ -5,14 +5,13 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-# 1. 프로젝트 경로 및 API 연결 (PDF 원본 로직 100% 복원)
+# 1. 프로젝트 경로 및 API 연결 (PDF 원본 로직 유지)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(PROJECT_DIR, ".env")
 
 if os.path.exists(env_path):
     load_dotenv(env_path)
 else:
-    # 깃허브 서버(Streamlit Cloud) 환경일 때 Secrets 금고에서 키를 강제 주입
     try:
         for key, value in st.secrets.items():
             os.environ[key] = str(value)
@@ -32,12 +31,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 3. Apple Pro Studio Ultra-Premium CSS (애니메이션 & 유리 질감)
+# 3. Apple Pro Studio Ultra-Premium CSS (가시성 및 질감 고도화)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-    /* 줌-인 등장 애니메이션: 배열이 촥~ 맞아 들어가는 느낌 */
     @keyframes studioReveal {
         0% { transform: scale(0.97); opacity: 0; filter: blur(15px); }
         100% { transform: scale(1); opacity: 1; filter: blur(0); }
@@ -60,11 +58,9 @@ st.markdown("""
         animation: studioReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Bento Card: 하이엔드 유리 질감 */
     .studio-card {
         background: var(--glass-white) !important;
         backdrop-filter: blur(40px) saturate(200%) !important;
-        -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
         border-radius: 35px !important;
         padding: 50px 40px !important;
         border: 1px solid var(--glass-border) !important;
@@ -83,14 +79,6 @@ st.markdown("""
         transform: translateY(-8px) scale(1.02) !important;
     }
 
-    .studio-card-title {
-        font-size: 24px !important;
-        font-weight: 600 !important;
-        color: var(--titanium-black) !important;
-        margin-bottom: 12px !important;
-    }
-
-    /* 티타늄 블랙 버튼: 누르고 싶게 만드는 고급 사틴 블랙 */
     button[kind="primary"] {
         background: var(--titanium-black) !important;
         color: white !important;
@@ -103,18 +91,38 @@ st.markdown("""
         border: none !important;
     }
 
-    button[kind="primary"]:hover {
-        background: #3c3c3e !important;
-        transform: scale(1.04) !important;
+    /* 가이드 섹션 스타일 (글자색 검정색으로 강제 고정) */
+    .guide-box {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(20px) !important;
+        border-radius: 30px !important;
+        padding: 50px !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        margin-top: 60px !important;
+        color: #1d1d1f !important; /* 선명한 검은색 */
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03) !important;
     }
 
-    /* 가이드 섹션 전용 스타일 */
-    .guide-box {
-        background: rgba(255, 255, 255, 0.5) !important;
-        border-radius: 25px !important;
-        padding: 30px !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        margin-top: 40px !important;
+    .guide-box h2, .guide-box h3, .guide-box h4 {
+        color: #1d1d1f !important;
+        font-weight: 600 !important;
+    }
+
+    .guide-box p, .guide-box li {
+        color: #1d1d1f !important;
+        line-height: 1.8 !important;
+        font-size: 15px !important;
+    }
+
+    .capture-placeholder {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border: 2px dashed rgba(0, 0, 0, 0.1) !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        text-align: center !important;
+        color: #86868b !important;
+        margin: 15px 0 !important;
+        font-size: 13px !important;
     }
 
     pre, code {
@@ -140,7 +148,7 @@ with st.sidebar:
     st.divider()
     images_enabled = st.checkbox("AI 이미지 생성 모드", value=False)
 
-# 5. subprocess 실시간 스트리밍 엔진 (원본 로직 복원)
+# 5. subprocess 실시간 스트리밍 엔진
 def stream_subprocess(cmd, env_extra, log_placeholder, max_lines=1000):
     env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"}
     buffer = []
@@ -164,88 +172,85 @@ st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; fon
 
 col1, col2, col3 = st.columns(3, gap="large")
 
-# --- 카드 1: 키워드 분석 ---
 with col1:
     st.markdown('<div class="studio-card"><div class="studio-card-title">키워드 분석</div><p style="color: #86868b; text-align: center;">네이버 검색 데이터를 기반으로<br>수익성 높은 키워드를 발굴합니다</p></div>', unsafe_allow_html=True)
-    if not naver_ok:
-        st.error("API 연결 필요")
+    if not naver_ok: st.error("API 연결 필요")
     else:
         if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
-            with st.status("분석 중...", expanded=True) as status:
+            with st.status("분석 중...", expanded=True):
                 log_box = st.empty()
-                rc, _ = stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
-                if rc == 0:
-                    status.update(label="분석 완료", state="complete")
-                    st.toast("데이터 갱신 완료")
-                else:
-                    status.update(label=f"오류 발생 ({rc})", state="error")
+                stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
 
-# --- 카드 2: 포스팅 생성 ---
 with col2:
     st.markdown('<div class="studio-card"><div class="studio-card-title">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 독창적인 법률 본문을 작성하고<br>워드프레스에 임시글로 발행합니다</p></div>', unsafe_allow_html=True)
-    if not wp_ok:
-        st.error("API 연결 필요")
-    elif not os.path.exists(CSV_PATH):
-        st.warning("분석 데이터가 필요합니다")
+    if not wp_ok: st.error("API 연결 필요")
     else:
         if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
             env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"}
-            with st.status("발행 프로세스 가동 중...", expanded=True) as status:
+            with st.status("발행 가동 중...", expanded=True):
                 log_box = st.empty()
                 rc, buf = stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box)
                 if rc == 0:
-                    status.update(label="발행 성공", state="complete")
                     edit_line = next((ln for ln in buf if "post.php?post=" in ln), None)
-                    if edit_line:
-                        url = edit_line.split()[-1].strip()
-                        st.success(f"임시글 생성 완료: {url}")
-                else:
-                    status.update(label=f"오류 발생 ({rc})", state="error")
+                    if edit_line: st.success(f"임시글 생성 완료: {edit_line.split()[-1].strip()}")
 
-# --- 카드 3: 데이터 인사이트 ---
 with col3:
     st.markdown('<div class="studio-card"><div class="studio-card-title">데이터 분석</div><p style="color: #86868b; text-align: center;">발굴된 키워드 통계를 분석하고<br>공장 가동 현황을 확인합니다</p></div>', unsafe_allow_html=True)
     if st.button("데이터 보기", key="btn_view", type="primary", use_container_width=True):
         st.session_state.show_data = True
 
-# 데이터 뷰 섹션
 if st.session_state.get("show_data", False):
     st.divider()
-    if not os.path.exists(CSV_PATH):
-        st.info("데이터가 아직 없습니다.")
-    else:
+    if os.path.exists(CSV_PATH):
         df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("발굴 키워드", f"{len(df)}개")
-        c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}")
-        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}")
-        c4.metric("시드 카테고리", df['seed'].nunique() if 'seed' in df.columns else 0)
-        st.dataframe(df, use_container_width=True, height=450)
-        st.download_button("데이터 추출 (CSV)", data=df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig"), file_name="law_seo_data.csv", use_container_width=True)
+        st.dataframe(df, use_container_width=True)
 
-# 7. 임시글 검수 가이드 섹션
-st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.subheader("📋 임시글 검수 및 최종 발행 가이드")
-g_col1, g_col2 = st.columns(2)
-
-with g_col1:
-    st.markdown("""
-    **1. 워드프레스 접속 및 확인**
-    * 발행 성공 후 나타나는 **[글 주소]**를 클릭하여 편집창으로 이동합니다.
-    * 우측 상단 상태가 **'임시글(Draft)'**인지 확인합니다.
+# 7. A to Z 운영자 인수인계 매뉴얼 섹션 (가독성 강화 버전)
+st.markdown("""
+<div class='guide-box'>
+    <h2 style='text-align: center; margin-bottom: 40px;'>📑 SEO 자동화 공장 운영자 매뉴얼 (A to Z)</h2>
     
-    **2. 본문 및 SEO 검수**
-    * **제목:** 키워드가 자연스럽게 포함되었는지 확인합니다.
-    * **이미지:** 본문 내용과 어울리는지, 대체 텍스트가 들어갔는지 확인합니다.
-    """)
+    <h3>Phase 1. 대시보드 조종 및 콘텐츠 생산</h3>
+    <p>본 프로그램은 법률 키워드를 발굴하고 AI가 본문을 작성하여 워드프레스에 '임시글'로 전송하는 전 과정을 자동화합니다.</p>
+    <div class='capture-placeholder'>[캡처 필수: 대시보드 메인 화면 및 사이드바 초록불 상태]</div>
+    <ul>
+        <li><b>1단계 (분석):</b> [키워드 분석] 카드의 '분석 실행'을 누릅니다. 네이버 광고 API를 통해 황금 키워드를 발굴합니다.</li>
+        <li><b>2단계 (생성):</b> 사이드바에서 '이미지 생성 모드' 체크 여부를 결정한 후, [포스팅 생성] 카드의 '생성 시작'을 누릅니다.</li>
+        <li><b>3단계 (확인):</b> 작업이 완료되면 초록색 성공 메시지와 함께 워드프레스 편집기 링크가 나타납니다.</li>
+    </ul>
 
-with g_col2:
-    st.markdown("""
-    **3. 최종 발행 절차**
-    * **카테고리:** 해당 포스팅에 맞는 카테고리를 지정합니다.
-    * **태그:** 관련 태그 3~5개를 추가하면 검색 노출에 유리합니다.
-    * **최종 발행:** 검수 완료 후 **[발행(Publish)]** 버튼을 누릅니다.
+    <hr style='border-color: rgba(0,0,0,0.05); margin: 40px 0;'>
+
+    <h3>Phase 2. 워드프레스 인간 검수 및 발행 (수익화 핵심)</h3>
+    <p>AI가 작성한 글을 사람이 최종 검수하여 품질을 높이는 단계입니다. 이 과정이 있어야 검색 엔진에서 높은 점수를 받습니다.</p>
+    <div class='capture-placeholder'>[캡처 필수: 워드프레스 글 편집기 화면 (상태: 임시글)]</div>
     
-    **💡 팁:** 발행 후 '네이버 서치어드바이저'에 URL 수집 요청을 하세요.
-    """)
-st.markdown("</div>", unsafe_allow_html=True)
+    <h4>1. 제목 및 본문 가독성 체크</h4>
+    <ul>
+        <li>제목에 타겟 키워드가 자연스럽게 녹아있는지 확인합니다.</li>
+        <li>문단 사이의 간격이 적절한지, 핵심 문구에 <b>굵게(Bold)</b> 처리가 되었는지 훑어봅니다.</li>
+    </ul>
+
+    <h4>2. 이미지 및 멀티미디어 검수</h4>
+    <ul>
+        <li>AI가 생성한 이미지가 본문 내용과 결이 맞는지 확인합니다.</li>
+        <li>이미지에 '대체 텍스트(Alt Text)'가 키워드 위주로 입력되었는지 확인합니다.</li>
+    </ul>
+
+    <h4>3. SEO 설정 및 최종 공개</h4>
+    <div class='capture-placeholder'>[캡처 필수: 워드프레스 우측 설정바 - 카테고리, 태그, 발행 버튼]</div>
+    <ul>
+        <li><b>카테고리:</b> 해당 주제에 맞는 카테고리를 정확히 선택합니다.</li>
+        <li><b>태그:</b> 관련 핵심 키워드 3~5개를 태그란에 입력합니다.</li>
+        <li><b>공개 상태:</b> 모든 검수가 끝났다면 '임시글' 상태를 '공개'로 변경하고 <b>[발행]</b> 버튼을 누릅니다.</li>
+    </ul>
+
+    <hr style='border-color: rgba(0,0,0,0.05); margin: 40px 0;'>
+
+    <h3>Phase 3. 사후 관리 및 인덱싱</h3>
+    <ul>
+        <li>발행된 글의 URL을 복사하여 <b>'네이버 서치어드바이저'</b>의 [웹 페이지 수집] 메뉴에 제출합니다.</li>
+        <li>이 과정까지 마쳐야 네이버 검색 결과에 빠르게 반영됩니다.</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)

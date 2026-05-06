@@ -213,19 +213,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 if os.path.exists("step1.png"): st.image("step1.png", use_container_width=True)
 
-st.markdown("<h3>Phase 2. Human-AI Collaborative SEO 최적화</h3>", unsafe_allow_html=True)
+st.markdown("<h3>Phase 2. 박과장님 검수 (SEO 최적화)</h3>", unsafe_allow_html=True)
 st.markdown("""
 <p>이 단계는 AI가 생산한 원석을 사람이 보석으로 깎는 과정입니다. 문맥의 자연스러움을 최종 검수하고, 
-구글의 최신 검색 알고리즘(AEO/SEO)에 맞게 <b>RankMath</b> 설정을 보정해야 합니다.</p>
+구글의 최신 검색 알고리즘(AEO/SEO)에 맞게 <b>RankMath SEO</b> 설정을 보정해야 합니다.</p>
 """, unsafe_allow_html=True)
 
 st.markdown("<h4>1) 스니펫(Snippet) 고도화 편집</h4>")
 st.markdown("""
 <p>스니펫은 검색 결과에서 사용자에게 가장 먼저 노출되는 요약 정보입니다. 본문 전체를 복사하여 <b>제미나이(Gemini)</b>에 붙여넣은 뒤, 
-아래의 <b>Golden Prompt</b>를 입력하여 최적의 값을 도출하십시오.</p>
+아래의 <b>프롬프트</b>를 입력하여 최적의 값을 도출하십시오.</p>
 """, unsafe_allow_html=True)
-st.info("💡 Golden Prompt: '스니펫 편집에 필요한 제목, 퍼머링크, 설명(160자 이내)을 구글 SEO, AEO에 가장 최적화 하여 알려줘.'")
-st.markdown("<p>도출된 <b>제목, 퍼머링크, 설명</b> 값을 워드프레스 하단의 RankMath 스니펫 편집기에 그대로 이식하십시오.</p>", unsafe_allow_html=True)
+st.info("💡 프롬프트: '스니펫 편집에 필요한 제목, 퍼머링크, 설명(160자 이내)을 구글 SEO, AEO에 가장 최적화 하여 알려줘.'")
+st.markdown("<p>도출된 <b>제목, 퍼머링크, 설명</b> 값을 워드프레스 하단의 RankMath 스니펫 편집기에 그대로 복붙하시면 됩니다.</p>", unsafe_allow_html=True)
 if os.path.exists("step2.png"): st.image("step2.png")
 if os.path.exists("step2-1.png"): st.image("step2-1.png")
 
@@ -246,7 +246,7 @@ st.markdown("<h3>Phase 3. 전략적 콘텐츠 발행 및 애드센스 승인 자
 st.markdown("""
 <p>구글 애드센스 승인을 위해서는 전문적이고 마이너한 콘텐츠 20개가 핵심입니다. 
 하지만 한꺼번에 발행하는 것은 구글 알고리즘이 '스팸'으로 오인할 수 있습니다.</p>
-<p><b>운영 지침:</b> 생성된 20개의 콘텐츠 중 10개는 즉시 업로드하고, 나머지 10개는 매일 오전 9시에 순차적으로 발행되도록 예약 기능을 반드시 사용하십시오.</p>
+<p><b>운영 지침:</b> 생성된 20개의 콘텐츠 중 10개는 즉시 업로드하고, 나머지 10개는 매일 오전 9시에 순차적으로 발행되도록 예약 기능을 사용하십시오.</p>
 """, unsafe_allow_html=True)
 if os.path.exists("step3.png"): st.image("step3.png")
 if os.path.exists("step3-1.png"): st.image("step3-1.png")

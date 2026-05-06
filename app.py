@@ -25,7 +25,7 @@ PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 
 # [26-31] 페이지 설정 (파비콘: ⚖️ 저울) [cite: 26-30]
 st.set_page_config(
-    page_title="SEO 자동화 공장 Pro",
+    page_title="워드프레스 자동화 공장",
     page_icon="⚖️", 
     layout="wide",
     initial_sidebar_state="collapsed"

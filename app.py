@@ -96,26 +96,28 @@ st.markdown("""
         border: none !important;
     }
 
-    /* 매뉴얼 가이드 박스 */
+  # app.py 내의 스타일 영역 중 가이드 박스 부분입니다.
+st.markdown("""
+<style>
     .guide-box {
         background: #ffffff !important;
-        border-radius: 40px !important;
-        padding: 60px !important;
+        border-radius: 30px !important;
+        padding: 50px !important;
         margin-top: 60px !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05) !important;
+        
+        /* 이 아래가 핵심입니다 */
+        color: #1d1d1f !important; 
+    }
+
+    /* 모든 제목과 텍스트를 검정색으로 강제 지정 */
+    .guide-box h2, .guide-box h3, .guide-box h4, .guide-box p, .guide-box li, .guide-box span {
         color: #1d1d1f !important;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03) !important;
-        border: 1px solid rgba(0,0,0,0.05) !important;
+        line-height: 1.8 !important;
     }
-
-    pre, code {
-        background-color: #1d1d1f !important;
-        color: #f5f5f7 !important;
-        border-radius: 20px !important;
-        padding: 24px !important;
-    }
-
-    [data-baseweb="tab-list"] { display: none !important; }
 </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # 4. API 연결 상태 확인

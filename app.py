@@ -5,16 +5,17 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-# [17-23] 프로젝트 경로 및 API 강제 연결 (PDF 원본 로직 100% 복구) [cite: 17-23]
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-env_path = os.path.join(PROJECT_DIR, ".env")
+# [1] 프로젝트 경로 및 API 강제 연결 (PDF 17-23라인 로직 완벽 복구)
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__)) # [cite: 17]
+env_path = os.path.join(PROJECT_DIR, ".env") # [cite: 18]
 
 if os.path.exists(env_path):
-    load_dotenv(env_path) [cite: 19-20]
+    load_dotenv(env_path) # [cite: 19-20]
 else:
+    # 깃허브 서버 환경 대응 로직 [cite: 21-23]
     try:
         for key, value in st.secrets.items():
-            os.environ[key] = str(value) [cite: 22-23]
+            os.environ[key] = str(value)
     except:
         pass
 
@@ -23,19 +24,20 @@ CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
 KEYWORD_SCRIPT = os.path.join(PROJECT_DIR, "keyword_research.py")
 PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 
-# [26-31] 페이지 설정 (파비콘: ⚖️ 저울) [cite: 26-30]
+# [2] 페이지 설정 (파비콘: ⚖️ 저울) [cite: 26-31]
 st.set_page_config(
-    page_title="워드프레스 자동화 공장",
+    page_title="SEO 자동화 공장 Pro",
     page_icon="⚖️", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# [32-264] Apple Pro Studio Ultra-Premium CSS (모든 글씨 검은색으로 고정) [cite: 35-264]
+# [3] Apple Pro Studio Ultra-Premium CSS (모든 텍스트 시인성 해결)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
+    /* 줌-인 등장 애니메이션 */
     @keyframes studioReveal {
         0% { transform: scale(0.97); opacity: 0; filter: blur(15px); }
         100% { transform: scale(1); opacity: 1; filter: blur(0); }
@@ -44,8 +46,7 @@ st.markdown("""
     :root {
         --bg-apple: #F5F5F7;
         --glass-white: rgba(255, 255, 255, 0.5);
-        --glass-border: rgba(255, 255, 255, 0.8);
-        --titanium-black: #1D1D1F; /* 애플 젯 블랙 */
+        --titanium-black: #1D1D1F;
     } [cite: 37-44]
 
     html, body, [data-testid="stAppViewContainer"] {
@@ -59,29 +60,30 @@ st.markdown("""
         animation: studioReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     } [cite: 56-58]
 
-    /* 사이드바 글씨 색상 검은색으로 강제 고정 */
+    /* 사이드바 글씨 검은색 고정  */
     [data-testid="stSidebar"] {
         background: rgba(255, 255, 255, 0.9) !important;
         backdrop-filter: blur(20px) !important;
-    } 
-    
+    }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h3 {
         color: #1d1d1f !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
     }
 
+    /* Bento Card 디자인 [cite: 96-111] */
     .studio-card {
         background: var(--glass-white) !important;
         backdrop-filter: blur(40px) saturate(200%) !important;
         border-radius: 35px !important;
         padding: 50px 40px !important;
-        border: 1px solid var(--glass-border) !important;
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05) !important;
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         min-height: 350px !important;
-    } [cite: 96-111]
+    }
 
+    /* 티타늄 버튼 [cite: 124-144] */
     button[kind="primary"] {
         background: var(--titanium-black) !important;
         color: white !important;
@@ -89,20 +91,21 @@ st.markdown("""
         padding: 14px 45px !important;
         width: 100% !important;
         border: none !important;
-    } [cite: 124-136]
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    }
 
-    /* 하단 가이드 박스 글자색 검정색(#1d1d1f) 확정 */
+    /* 하단 가이드 박스 (배경 흰색 / 글자 검은색 완벽 해결) */
     .guide-box {
         background: #ffffff !important;
         border-radius: 30px !important;
-        padding: 50px !important;
+        padding: 60px !important;
         margin-top: 60px !important;
-        color: #1d1d1f !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03) !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        color: #1d1d1f !important;
     }
 
-    .guide-box h2, .guide-box h3, .guide-box h4, .guide-box p, .guide-box li, .guide-box span {
+    .guide-box h2, .guide-box h3, .guide-box h4, .guide-box p, .guide-box li, .guide-box b {
         color: #1d1d1f !important;
     }
 
@@ -117,7 +120,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# [265-276] API 연결 상태 확인 [cite: 268-276]
+# [4] API 연결 상태 확인 [cite: 268-276]
 naver_ok = bool(os.getenv("NAVER_AD_ACCESS_KEY") and os.getenv("NAVER_AD_SECRET_KEY") and os.getenv("NAVER_AD_CUSTOMER_ID"))
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
 wp_ok = bool(os.getenv("WP_URL") and os.getenv("WP_USERNAME") and os.getenv("WP_PASSWORD"))
@@ -130,7 +133,7 @@ with st.sidebar:
     st.divider()
     images_enabled = st.checkbox("AI 이미지 생성 모드", value=False)
 
-# [293-317] subprocess 스트리밍 로직 (원본 복구) [cite: 295-317]
+# [5] subprocess 스트리밍 엔진 (원본 로직 100% 복원) [cite: 295-317]
 def stream_subprocess(cmd, env_extra, log_placeholder):
     env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"}
     buffer = []
@@ -138,18 +141,18 @@ def stream_subprocess(cmd, env_extra, log_placeholder):
         proc = subprocess.Popen(
             cmd, cwd=PROJECT_DIR, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, bufsize=1, env=env
-        ) [cite: 300-307]
+        )
         assert proc.stdout is not None
         for line in proc.stdout:
             buffer.append(line.rstrip("\n"))
-            log_placeholder.code("\n".join(buffer[-1000:]), language="text") [cite: 313-315]
+            log_placeholder.code("\n".join(buffer[-1000:]), language="text")
         proc.wait()
-        return proc.returncode, buffer [cite: 316-317]
+        return proc.returncode, buffer
     except Exception as e:
         log_placeholder.error(f"실행 실패: {e}")
-        return -1, [] [cite: 308-310]
+        return -1, []
 
-# 메인 UI
+# [6] 메인 UI 조종석 [cite: 318-380]
 st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; font-weight: 600; margin-bottom: 60px;'>SEO 자동화 공장 Pro</h1>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3, gap="large")
@@ -157,51 +160,64 @@ col1, col2, col3 = st.columns(3, gap="large")
 with col1:
     st.markdown('<div class="studio-card"><h3>키워드 분석</h3></div>', unsafe_allow_html=True)
     if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
-        with st.status("분석 중...", expanded=True):
+        with st.status("분석 중...", expanded=True) as status:
             log_box = st.empty()
-            stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
+            rc, _ = stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
+            if rc == 0: status.update(label="분석 완료", state="complete")
 
 with col2:
     st.markdown('<div class="studio-card"><h3>포스팅 생성</h3></div>', unsafe_allow_html=True)
     if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
         env_extra = {"IMAGES_ENABLED": str(images_enabled).lower()}
-        with st.status("생성 중...", expanded=True):
+        with st.status("생성 중...", expanded=True) as status:
             log_box = st.empty()
             rc, buf = stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box)
-            if rc == 0:
-                edit_line = next((ln for ln in buf if "post.php?post=" in ln), None)
-                if edit_line: st.success(f"생성 완료: {edit_line.split()[-1].strip()}")
+            if rc == 0: status.update(label="발행 성공", state="complete")
 
 with col3:
     st.markdown('<div class="studio-card"><h3>데이터 분석</h3></div>', unsafe_allow_html=True)
     if st.button("데이터 보기", key="btn_view", type="primary", use_container_width=True):
         st.session_state.show_data = True
 
+# 데이터 뷰 섹션 [cite: 381-400]
 if st.session_state.get("show_data", False):
     st.divider()
     if os.path.exists(CSV_PATH):
-        df = pd.read_csv(CSV_PATH, encoding="utf-8-sig") [cite: 388]
-        c1, c2, c3, c4 = st.columns(4) [cite: 389]
-        c1.metric("발굴 키워드", f"{len(df)}개") [cite: 390]
-        c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}") [cite: 391]
-        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}") [cite: 392]
-        c4.metric("카테고리 수", df['seed'].nunique() if 'seed' in df.columns else 0) [cite: 393]
-        st.dataframe(df, use_container_width=True, height=450) [cite: 394]
+        df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("발굴 키워드", f"{len(df)}개")
+        c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}")
+        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}")
+        c4.metric("시드 카테고리", df['seed'].nunique() if 'seed' in df.columns else 0)
+        st.dataframe(df, use_container_width=True, height=450)
 
-# 7. A to Z 운영자 인수인계 매뉴얼 (색상 수정 완료)
-st.markdown("""
-<div class='guide-box'>
-    <h2 style='text-align: center; margin-bottom: 50px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>
-    <h3>1. 워드프레스 임시글 확인 및 진입</h3>
-    <p>포스팅 생성 완료 후, 관리자 페이지의 [글] > [모든 글] 메뉴로 접속하여 임시글 제목을 클릭합니다.</p>
-    <img src="step1.png" style="width:100%; border-radius:20px; margin:20px 0;">
-    
-    <h3 style='margin-top: 40px;'>2. RankMath SEO 설정 (중요)</h3>
-    <p>AI 글을 다듬고 스니펫 편집, 포커스 키워드를 설정합니다.</p>
-    <img src="step2.png" style="width:100%; border-radius:20px; margin:20px 0;">
-    
-    <h3 style='margin-top: 40px;'>3. 공개 일정 예약 및 발행</h3>
-    <p>달력 기능을 이용해 매일 오전 9시에 발행되도록 예약을 걸어둡니다.</p>
-    <img src="step3.jpg" style="width:100%; border-radius:20px; margin:20px 0;">
-</div>
-""", unsafe_allow_html=True)
+# ==========================================================
+# [7] 사장님표 실무자 인수인계 매뉴얼 (최종 통합본)
+# ==========================================================
+st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-bottom: 40px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>", unsafe_allow_html=True)
+
+st.subheader("1. 워드프레스 임시글 확인 및 진입")
+st.write("포스팅 생성 완료 후, [글] > [모든 글] 메뉴로 접속하여 임시글 제목을 클릭합니다.")
+st.image("step1.png", use_container_width=True)
+
+st.subheader("2. 과장님 검수 / RankMath SEO 설정")
+st.markdown("#### **1) 스니펫 편집 (제미나이 활용)**")
+st.info("**Gemini 프롬프트:** \"스니펫 편집에 필요한 제목, 퍼머링크, 설명을 구글 SEO에 최적화해서 알려줘.\"")
+st.image(["step2.png", "step2-1.png"], use_container_width=True)
+
+st.markdown("#### **2) 포커스 키워드 및 체크리스트**")
+st.write("제목의 첫 번째 키워드를 삽입하고, 랭크매스 항목이 80점 이상 초록색이 되도록 보완합니다.")
+st.image(["step2-2.png", "step2-3.png", "step2-4.png"], use_container_width=True)
+
+st.subheader("3. 공개 일정 예약 및 발행")
+st.warning("**전략:** 매일 오전 9시 예약 발행을 활용하여 블로그 지수를 관리합니다.")
+col_a, col_b = st.columns(2)
+with col_a:
+    st.image("step3.png", caption="SEO 점수 확인")
+    st.image("step3-1.png", caption="공개 일시 클릭")
+with col_b:
+    st.image("step3-2.png", caption="날짜/시간 설정")
+    st.image("step4.png", caption="최종 예약 버튼 클릭")
+
+st.markdown("</div>", unsafe_allow_html=True)

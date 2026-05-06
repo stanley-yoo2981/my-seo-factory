@@ -29,7 +29,7 @@ PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 # 2. 프리미엄 페이지 설정
 # ==========================================
 st.set_page_config(
-    page_title="SEO 자동화 공장 Pro",
+    page_title="워드프레스 자동화 공장",
     page_icon="⚖️", 
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -169,7 +169,7 @@ def stream_subprocess(cmd, env_extra, log_placeholder, max_lines=1000):
 # ==========================================
 # 6. 메인 조종실 UI
 # ==========================================
-st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; font-weight: 600; margin-bottom: 60px; letter-spacing: -2px;'>SEO 자동화 공장 Pro</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; font-weight: 600; margin-bottom: 60px; letter-spacing: -2px;'>워드프레스 자동화 공장</h1>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3, gap="large")
 
@@ -211,7 +211,7 @@ if st.session_state.get("show_data", False):
 # 7. 인수인계 매뉴얼 (완벽 시인성 버전)
 # ==========================================
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.markdown("<h2 style='text-align: center; margin-bottom: 50px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-bottom: 50px;'>📑 워드프레스 검수 </h2>", unsafe_allow_html=True)
 
 # 1단계
 st.markdown("<h3 style='margin-top: 30px;'>1. 워드프레스 임시글 확인 및 진입</h3>", unsafe_allow_html=True)
@@ -238,6 +238,6 @@ st.markdown("<p>하루 10개는 즉시 업로드, 나머지 10개는 매일 오�
 if os.path.exists("step3.png"): st.image("step3.png")
 if os.path.exists("step3-1.png"): st.image("step3-1.png")
 if os.path.exists("step3-2.png"): st.image("step3-2.png")
-if os.path.exists("4단계.png"): st.image("4단계.png")
+if os.path.exists("step4.png"): st.image("step4.png")
 
 st.markdown("</div>", unsafe_allow_html=True)

@@ -1,0 +1,48 @@
+# 🔐 비밀 키 / 자격증명 — 절대 커밋 금지
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 파이썬
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 가상환경
+.venv/
+venv/
+env/
+ENV/
+
+# 생성물 (재생성 가능)
+images/
+post_preview.html
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+logs/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# 워드프레스 mu-plugin은 호스팅 측에 배포되므로 git 제외 가능 (선택)
+# mu-plugins/
+
+# 캐시
+.cache/
+.pytest_cache/
+.mypy_cache/

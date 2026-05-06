@@ -17,6 +17,7 @@ os.environ["IMG_DIR"] = TEMP_IMG_DIR
 if os.path.exists(env_path):
     load_dotenv(env_path)
 else:
+    # 스트림릿 클라우드 Secrets 보안 금고 대응
     try:
         for key, value in st.secrets.items():
             os.environ[key] = str(value)
@@ -183,14 +184,14 @@ if st.session_state.get("show_data", False):
         st.dataframe(pd.read_csv(CSV_PATH, encoding="utf-8-sig"), use_container_width=True)
 
 # ==========================================
-# 7. 워드프레스 검수 가이드 (친절 어투 & 블랙 고정)
+# 7. 워드프레스 검수 가이드 (제목 및 내용 픽스)
 # ==========================================
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
 st.markdown("<h2 style='text-align: center; margin-bottom: 50px;'>워드프레스 검수 가이드</h2>", unsafe_allow_html=True)
 
 # 1단계
 st.markdown("<h3>1. 워드프레스 임시글 확인 및 진입</h3>", unsafe_allow_html=True)
-st.markdown("<p>포스팅 생성이 완료되면 워드프레스 관리자 페이지의 <b>[글] > [모든 글]</b> 메뉴로 들어가 보세요. 목록에서 방금 작성된 따끈따끈한 제목을 클릭해서 편집 화면으로 들어가면 돼요!</p>", unsafe_allow_html=True)
+st.markdown("<p>포스팅 생성이 완료되면 워드프레스 관리자 페이지의 <b>[글] > [모든 글]</b> 메뉴로 접속해 보세요. 목록에서 방금 작성된 따끈따끈한 제목을 클릭해서 편집 화면으로 들어가면 돼요!</p>", unsafe_allow_html=True)
 if os.path.exists("step1.png"): st.image("step1.png", use_container_width=True)
 
 # 2단계

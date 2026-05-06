@@ -29,7 +29,7 @@ PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 
 # 2. 페이지 설정
 st.set_page_config(
-    page_title="Law-Brief Intelligence Studio",
+    page_title="워드프레스 공장 🏭",
     page_icon="⚖️", 
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -164,7 +164,7 @@ col1, col2, col3 = st.columns(3, gap="large")
 with col1:
     if st.session_state.factory_step == 1:
         st.markdown('<div class="step-active">', unsafe_allow_html=True)
-    if st.button("Keyword\nResearch", key="card_kw"):
+    if st.button("키워드 찾기", key="card_kw"):
         with st.status("Analyzing Market Demand...", expanded=True):
             p_bar = st.progress(0)
             stream_subprocess_with_progress([sys.executable, "-u", KEYWORD_SCRIPT], {}, st.empty(), p_bar)
@@ -177,7 +177,7 @@ with col1:
 with col2:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="step-active">', unsafe_allow_html=True)
-    if st.button("Content\nGeneration", key="card_post"):
+    if st.button("콘텐츠 공장 가동", key="card_post"):
         with st.status("Writing Professional Intelligence...", expanded=True):
             p_bar = st.progress(0)
             env_extra = {"IMAGES_ENABLED": str(images_enabled).lower()}
@@ -190,7 +190,7 @@ with col2:
 
 # 카드 3: 데이터 분석
 with col3:
-    if st.button("Data\nAnalysis", key="card_view"):
+    if st.button("데이터 분석", key="card_view"):
         st.session_state.show_data = True
 
 if st.session_state.get("show_data", False):
@@ -200,10 +200,10 @@ if st.session_state.get("show_data", False):
         st.dataframe(df, use_container_width=True, height=450)
 
 # ==========================================
-# 7. Professional Content Operations Master Guide
+# 7. 워드프레스 검수 가이드
 # ==========================================
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.markdown("<h2>Professional Content Operations Master Guide</h2>", unsafe_allow_html=True)
+st.markdown("<h2>워드프레스 검수 가이드</h2>", unsafe_allow_html=True)
 
 st.markdown("<h3>Phase 1. 워드프레스 시스템 진입 및 동기화</h3>", unsafe_allow_html=True)
 st.markdown("""

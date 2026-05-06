@@ -5,234 +5,222 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-# [17-23] 프로젝트 경로 설정 및 API 강제 연결 로직
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-env_path = os.path.join(PROJECT_DIR, ".env")
+# [17-23] 프로젝트 경로 및 API 강제 연결 (PDF 원본 로직 유지)
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__)) [cite: 17]
+env_path = os.path.join(PROJECT_DIR, ".env") [cite: 18]
 
 if os.path.exists(env_path):
-    load_dotenv(env_path) # [cite: 19-20]
+    load_dotenv(env_path) [cite: 19-20]
 else:
-    # 깃허브 서버(Streamlit Cloud) 환경일 때 Secrets 금고에서 키를 꺼내 시스템 환경 변수로 강제 주입
     try:
         for key, value in st.secrets.items():
-            os.environ[key] = str(value) # 
+            os.environ[key] = str(value) [cite: 22-23]
     except:
         pass
 
-# [24-25] 주요 파일 경로 정의
+# [24-25] 주요 파일 경로 정의 [cite: 24-25]
 CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
 KEYWORD_SCRIPT = os.path.join(PROJECT_DIR, "keyword_research.py")
 PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
 
-# [26-31] 페이지 설정
+# [26-31] 페이지 설정 [cite: 26-31]
 st.set_page_config(
-    page_title="법률 블로그 자동화 대시보드",
+    page_title="SEO 자동화 공장 Pro",
     page_icon="🍏",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# [32-264] Apple Pro Studio Ultra-Minimalist CSS (PDF 37-263라인 복구)
+# [32-264] Apple Pro Studio 고도화 CSS (애니메이션 & 리얼 글래스)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-    
+
+    /* [애니메이션 정의] 촥~ 감기며 나타나는 효과 */
+    @keyframes reveal {
+        0% { transform: scale(1.05); opacity: 0; filter: blur(10px); }
+        100% { transform: scale(1); opacity: 1; filter: blur(0); }
+    }
+
     :root {
-        --bg-primary: #f5f5f7;
-        --bg-secondary: #ffffff;
-        --text-primary: #1d1d1f;
-        --text-secondary: #86868b;
-        --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.04);
-        --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.08);
+        --bg-apple: #F5F5F7;
+        --glass-bg: rgba(255, 255, 255, 0.4);
+        --glass-border: rgba(255, 255, 255, 0.7);
+        --text-main: #1D1D1F;
+        --satin-black: #1D1D1F;
     }
 
     html, body, [data-testid="stAppViewContainer"] {
-        background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%) !important;
-        color: var(--text-primary) !important;
+        background: var(--bg-apple) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
-        letter-spacing: -0.022em !important;
     }
 
+    /* 전체 레이아웃 등장 애니메이션 */
     [data-testid="stMainBlockContainer"] {
         padding: 80px 100px !important;
-        max-width: none !important;
+        animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    h1, h2, h3, h4, h5, h6 {
-        font-weight: 600 !important;
-        letter-spacing: -0.025em !important;
-        color: var(--text-primary) !important;
-    }
-
-    [data-testid="stSidebar"] {
-        background: rgba(255, 255, 255, 0.8) !important;
-        backdrop-filter: blur(20px) !important;
-        border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
-    }
-
-    [data-baseweb="tab-list"] { display: none !important; }
-
+    /* [리얼 글래스 카드] 유리 질감 극대화 */
     .studio-card {
-        background: #ffffff !important;
-        border-radius: 28px !important;
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(30px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+        border-radius: 32px !important;
         padding: 60px 40px !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: 1px solid var(--glass-border) !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        min-height: 340px !important;
-        box-shadow: var(--shadow-soft) !important;
-        border: 1px solid rgba(0, 0, 0, 0.02) !important;
+        min-height: 360px !important;
     }
 
     .studio-card:hover {
-        box-shadow: var(--shadow-hover) !important;
-        transform: translateY(-5px) !important;
+        background: rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12) !important;
+        transform: translateY(-8px) scale(1.02) !important;
     }
 
-    .studio-card-title {
-        font-size: 24px !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.02em !important;
-        color: var(--text-primary) !important;
-        margin-bottom: 12px !important;
-    }
-
+    /* [티타늄 사틴 버튼] 누르고 싶게 만드는 고급스러운 블랙 */
     button[kind="primary"] {
-        background: #0071E3 !important;
+        background: var(--satin-black) !important;
         color: white !important;
-        border: none !important;
-        border-radius: 999px !important;
-        padding: 14px 40px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 999px !important; /* Pill shape */
+        padding: 16px 40px !important;
         font-weight: 500 !important;
         font-size: 15px !important;
-        transition: all 0.2s ease !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         width: 100% !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
     }
 
     button[kind="primary"]:hover {
-        background: #0077ED !important;
-        transform: scale(1.02) !important;
-        box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3) !important;
+        background: #323235 !important;
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3) !important;
+        transform: scale(1.05) !important;
     }
 
-    [data-testid="stMetricContainer"] {
-        background: #ffffff !important;
-        border-radius: 20px !important;
-        padding: 24px !important;
-        box-shadow: var(--shadow-soft) !important;
-        border: 1px solid rgba(0, 0, 0, 0.02) !important;
+    /* 사이드바 가독성 개선 */
+    [data-testid="stSidebar"] {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+    }
+    
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+        color: #1d1d1f !important;
+        font-weight: 500 !important;
     }
 
+    /* 로그 박스: Studio Dark 스타일 [cite: 203-211] */
     pre, code {
         background-color: #1d1d1f !important;
         color: #f5f5f7 !important;
-        border-radius: 16px !important;
+        border-radius: 20px !important;
         padding: 24px !important;
         font-family: 'SF Mono', 'Monaco', monospace !important;
-        font-size: 13px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# [265-276] API 연결 상태 확인 로직
+# [265-276] API 연결 상태 확인 로직 [cite: 268-276]
 naver_ok = bool(os.getenv("NAVER_AD_ACCESS_KEY") and os.getenv("NAVER_AD_SECRET_KEY") and os.getenv("NAVER_AD_CUSTOMER_ID"))
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
 wp_ok = bool(os.getenv("WP_URL") and os.getenv("WP_USERNAME") and os.getenv("WP_PASSWORD"))
 
-# [277-292] Sidebar
+# [277-292] 사이드바 상태 표시
 with st.sidebar:
-    st.markdown("### **System Status**")
-    st.write("Naver API:", "🟢" if naver_ok else "🔴")
+    st.markdown("### **시스템 상태**")
+    st.write("네이버 API:", "🟢" if naver_ok else "🔴")
     st.write("OpenAI API:", "🟢" if openai_ok else "🔴")
-    st.write("WordPress API:", "🟢" if wp_ok else "🔴")
+    st.write("워드프레스 API:", "🟢" if wp_ok else "🔴")
     st.divider()
-    images_enabled = st.checkbox("이미지 생성 모드", value=False)
+    images_enabled = st.checkbox("이미지 생성 모드", value=False) [cite: 292]
 
-# [293-317] subprocess 실시간 스트리밍 엔진 (원본 복구)
+# [293-317] subprocess 실시간 스트리밍 엔진 (핵심 로직 100% 복원) [cite: 295-317]
 def stream_subprocess(cmd: list, env_extra: dict, log_placeholder, max_lines=1000):
-    env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"}
-    buffer = []
+    env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"} [cite: 297]
+    buffer = [] [cite: 298]
     try:
         proc = subprocess.Popen(
             cmd, cwd=PROJECT_DIR, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, bufsize=1, env=env
-        )
+        ) [cite: 300-307]
         assert proc.stdout is not None
         for line in proc.stdout:
-            buffer.append(line.rstrip("\n"))
-            log_placeholder.code("\n".join(buffer[-max_lines:]), language="text")
-        proc.wait()
-        return proc.returncode, buffer
+            buffer.append(line.rstrip("\n")) [cite: 314]
+            log_placeholder.code("\n".join(buffer[-max_lines:]), language="text") [cite: 315]
+        proc.wait() [cite: 316]
+        return proc.returncode, buffer [cite: 317]
     except Exception as e:
-        log_placeholder.error(f"실행 실패: {e}")
+        log_placeholder.error(f"실행 실패: {e}") [cite: 309]
         return -1, []
 
 # [318-380] 메인 UI
-st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 48px; font-weight: 600; margin-bottom: 50px;'>SEO Factory Pro</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 52px; font-weight: 600; margin-bottom: 60px; letter-spacing: -1.5px;'>SEO Factory Pro</h1>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3, gap="large")
 
-# ========== Card 1: 키워드 분석 ==========
+# ========== 카드 1: 키워드 분석 [cite: 322-343] ==========
 with col1:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">키워드 분석</div><p style="color: #86868b;">Naver AD API 연동 발굴</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 26px; font-weight: 600; margin-bottom: 12px;">키워드 분석</div><p style="color: #86868b; text-align: center;">네이버 실시간 데이터를<br>정밀하게 수집합니다</p></div>', unsafe_allow_html=True)
     if not naver_ok:
         st.error("API 연결 필요")
     else:
         if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
-            with st.status("진행 중...", expanded=True) as status:
+            with st.status("공장 가동 중...", expanded=True) as status:
                 log_box = st.empty()
-                rc, _ = stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
+                rc, _ = stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box) [cite: 336]
                 if rc == 0:
-                    status.update(label="완료", state="complete")
-                    st.toast("keywords.csv 데이터 갱신")
+                    status.update(label="분석 완료", state="complete")
+                    st.toast("데이터 갱신 완료")
                 else:
-                    status.update(label=f"오류 발생 (Code: {rc})", state="error")
+                    status.update(label=f"오류 발생 ({rc})", state="error")
 
-# ========== Card 2: 포스팅 생성 ==========
+# ========== 카드 2: 포스팅 생성 [cite: 344-372] ==========
 with col2:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">포스팅 생성</div><p style="color: #86868b;">AI 본문 작성 및 발행</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 26px; font-weight: 600; margin-bottom: 12px;">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 독창적인 본문을<br>작성하고 자동 발행합니다</p></div>', unsafe_allow_html=True)
     if not wp_ok:
         st.error("API 연결 필요")
     elif not os.path.exists(CSV_PATH):
-        st.warning("분석 데이터가 없습니다")
+        st.warning("분석 데이터가 필요합니다")
     else:
         if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
-            env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"}
-            with st.status("발행 중...", expanded=True) as status:
+            env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"} [cite: 356]
+            with st.status("발행 프로세스 중...", expanded=True) as status:
                 log_box = st.empty()
-                rc, buf = stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box)
+                rc, buf = stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box) [cite: 360]
                 if rc == 0:
                     status.update(label="발행 완료", state="complete")
-                    edit_line = next((ln for ln in buf if "post.php?post=" in ln), None)
+                    edit_line = next((ln for ln in buf if "post.php?post=" in ln), None) [cite: 367]
                     if edit_line:
                         url = edit_line.split()[-1].strip()
-                        st.success(f"글 주소: {url}")
+                        st.success(f"발행 URL: {url}")
                 else:
-                    status.update(label=f"오류 {rc}", state="error")
+                    status.update(label=f"오류 발생 ({rc})", state="error")
 
-# ========== Card 3: 데이터 보기 ==========
+# ========== 카드 3: 데이터 보기 [cite: 373-380] ==========
 with col3:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">데이터 보기</div><p style="color: #86868b;">분석 결과 데이터베이스</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 26px; font-weight: 600; margin-bottom: 12px;">인사이트</div><p style="color: #86868b; text-align: center;">수집된 모든 데이터를<br>한눈에 분석합니다</p></div>', unsafe_allow_html=True)
     if st.button("파일 열기", key="btn_view", type="primary", use_container_width=True):
         st.session_state.show_data = True
 
-# [381-400] 데이터 뷰 섹션
+# [381-400] 데이터 뷰 섹션 [cite: 382-400]
 if st.session_state.get("show_data", False):
     st.divider()
     if not os.path.exists(CSV_PATH):
-        st.info("아직 분석된 데이터 파일이 없습니다.")
+        st.info("데이터가 아직 생성되지 않았습니다.")
     else:
-        df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("발굴 키워드", f"{len(df)}개")
-        c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}")
-        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}")
-        c4.metric("시드 카테고리", df['seed'].nunique() if 'seed' in df.columns else "N/A")
-        st.dataframe(df, use_container_width=True, height=520)
-        st.download_button(
-            "데이터 다운로드 (CSV)", 
-            data=df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig"), 
-            file_name="seo_results.csv", mime="text/csv", use_container_width=True
-        )
+        df = pd.read_csv(CSV_PATH, encoding="utf-8-sig") [cite: 388]
+        c1, c2, c3, c4 = st.columns(4) [cite: 389]
+        c1.metric("발굴 키워드", f"{len(df)}개") [cite: 390]
+        c2.metric("최고 검색량", f"{int(df['total_volume'].max()):,}") [cite: 391]
+        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}") [cite: 392]
+        c4.metric("카테고리 수", df['seed'].nunique() if 'seed' in df.columns else 0) [cite: 393]
+        st.dataframe(df, use_container_width=True, height=550) [cite: 394]
+        st.download_button("엑셀 파일로 추출 (CSV)", data=df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig"), file_name="law_seo_data.csv", mime="text/csv", use_container_width=True) [cite: 395-400]

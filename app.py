@@ -5,21 +5,19 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-# 1. 프로젝트 경로 및 API 강제 연결 (서버 환경 대응)
+# 1. 프로젝트 경로 및 API 강제 연결 (PDF 원본 로직 100% 복구)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(PROJECT_DIR, ".env")
 
 if os.path.exists(env_path):
     load_dotenv(env_path)
 else:
-    # 깃허브 서버(Streamlit Cloud) 환경일 때 Secrets 금고에서 키를 꺼내 시스템 환경 변수로 강제 주입
     try:
         for key, value in st.secrets.items():
             os.environ[key] = str(value)
     except:
         pass
 
-# 주요 파일 경로 정의
 CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
 KEYWORD_SCRIPT = os.path.join(PROJECT_DIR, "keyword_research.py")
 PUBLISH_SCRIPT = os.path.join(PROJECT_DIR, "wp_content_generator.py")
@@ -32,12 +30,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 3. Apple Pro Studio Ultra-Premium CSS (애니메이션 & 시인성 강화)
+# 3. Apple Pro Studio Ultra-Premium CSS (매뉴얼 시인성 극대화)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-    /* 줌-인 등장 애니메이션: 배열이 촥~ 맞아 들어가는 느낌 */
     @keyframes studioReveal {
         0% { transform: scale(0.97); opacity: 0; filter: blur(15px); }
         100% { transform: scale(1); opacity: 1; filter: blur(0); }
@@ -60,11 +57,9 @@ st.markdown("""
         animation: studioReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Bento Card: 하이엔드 유리 질감 */
     .studio-card {
         background: var(--glass-white) !important;
         backdrop-filter: blur(40px) saturate(200%) !important;
-        -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
         border-radius: 35px !important;
         padding: 50px 40px !important;
         border: 1px solid var(--glass-border) !important;
@@ -77,58 +72,63 @@ st.markdown("""
         min-height: 350px !important;
     }
 
-    .studio-card:hover {
-        background: rgba(255, 255, 255, 0.65) !important;
-        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12) !important;
-        transform: translateY(-8px) scale(1.02) !important;
-    }
-
-    .studio-card-title {
-        font-size: 24px !important;
-        font-weight: 600 !important;
-        color: var(--titanium-black) !important;
-        margin-bottom: 12px !important;
-    }
-
-    /* 티타늄 블랙 버튼: 누르고 싶게 만드는 고급 사틴 블랙 */
     button[kind="primary"] {
         background: var(--titanium-black) !important;
         color: white !important;
         border-radius: 999px !important;
         padding: 14px 45px !important;
         font-weight: 500 !important;
-        transition: all 0.3s ease !important;
         width: 100% !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
         border: none !important;
     }
 
-    button[kind="primary"]:hover {
-        background: #3c3c3e !important;
-        transform: scale(1.04) !important;
-    }
-
-    /* 매뉴얼 가이드 박스 디자인 */
+    /* 운영 매뉴얼 가이드 박스 디자인 */
     .guide-box {
-        background: rgba(255, 255, 255, 0.8) !important;
-        backdrop-filter: blur(20px) !important;
-        border-radius: 30px !important;
-        padding: 50px !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        margin-top: 60px !important;
+        background: #ffffff !important;
+        border-radius: 40px !important;
+        padding: 60px !important;
+        margin-top: 80px !important;
         color: #1d1d1f !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03) !important;
+        border: 1px solid rgba(0,0,0,0.05) !important;
     }
 
-    .capture-spot {
-        background: #f0f0f2;
-        border: 2px dashed #d2d2d7;
-        border-radius: 20px;
-        padding: 40px;
-        text-align: center;
-        color: #86868b;
-        margin: 20px 0;
+    .manual-step {
+        border-bottom: 1px solid #f2f2f7;
+        padding-bottom: 40px;
+        margin-bottom: 40px;
+    }
+
+    .manual-step:last-child { border: none; }
+
+    .step-title {
+        font-size: 28px !important;
+        font-weight: 600 !important;
+        margin-bottom: 20px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .step-number {
+        background: #1d1d1f;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-right: 15px;
+    }
+
+    .img-caption {
         font-size: 14px;
+        color: #86868b;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 30px;
     }
 
     pre, code {
@@ -136,7 +136,6 @@ st.markdown("""
         color: #f5f5f7 !important;
         border-radius: 20px !important;
         padding: 24px !important;
-        font-family: 'SF Mono', 'Monaco', monospace !important;
     }
 
     [data-baseweb="tab-list"] { display: none !important; }
@@ -148,7 +147,6 @@ naver_ok = bool(os.getenv("NAVER_AD_ACCESS_KEY") and os.getenv("NAVER_AD_SECRET_
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
 wp_ok = bool(os.getenv("WP_URL") and os.getenv("WP_USERNAME") and os.getenv("WP_PASSWORD"))
 
-# 사이드바 (시스템 상태)
 with st.sidebar:
     st.markdown("### **시스템 상태**")
     st.write("네이버 API:", "🟢" if naver_ok else "🔴")
@@ -157,7 +155,7 @@ with st.sidebar:
     st.divider()
     images_enabled = st.checkbox("AI 이미지 생성 모드", value=False)
 
-# 5. subprocess 실시간 스트리밍 엔진 (원본 로직 100% 복원)
+# 5. subprocess 실시간 스트리밍 엔진 (원본 로직 복원)
 def stream_subprocess(cmd: list, env_extra: dict, log_placeholder, max_lines=1000):
     env = {**os.environ, **env_extra, "PYTHONUNBUFFERED": "1"}
     buffer = []
@@ -181,96 +179,81 @@ st.markdown("<h1 style='text-align: center; color: #1d1d1f; font-size: 56px; fon
 
 col1, col2, col3 = st.columns(3, gap="large")
 
-# --- 카드 1: 키워드 분석 ---
 with col1:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">키워드 분석</div><p style="color: #86868b; text-align: center;">네이버 검색 데이터를 기반으로<br>수익성 높은 키워드를 발굴합니다</p></div>', unsafe_allow_html=True)
-    if not naver_ok: st.error("API 연결 필요")
-    else:
-        if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
-            with st.status("분석 중...", expanded=True) as status:
-                log_box = st.empty()
-                rc, _ = stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
-                if rc == 0:
-                    status.update(label="분석 완료", state="complete")
-                    st.toast("데이터 갱신 완료")
-                else:
-                    status.update(label=f"오류 발생 ({rc})", state="error")
+    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">키워드 분석</div><p style="color: #86868b; text-align: center;">네이버 실시간 데이터를 분석하여<br>수익성 높은 키워드를 발굴합니다</p></div>', unsafe_allow_html=True)
+    if st.button("분석 실행", key="btn_kw", type="primary", use_container_width=True):
+        with st.status("분석 중...", expanded=True):
+            log_box = st.empty()
+            stream_subprocess([sys.executable, "-u", KEYWORD_SCRIPT], {}, log_box)
 
-# --- 카드 2: 포스팅 생성 ---
 with col2:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 독창적인 법률 본문을 작성하고<br>워드프레스에 임시글로 발행합니다</p></div>', unsafe_allow_html=True)
-    if not wp_ok: st.error("API 연결 필요")
-    elif not os.path.exists(CSV_PATH): st.warning("분석 데이터가 필요합니다")
-    else:
-        if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
-            env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"}
-            with st.status("발행 가동 중...", expanded=True) as status:
-                log_box = st.empty()
-                rc, buf = stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box)
-                if rc == 0:
-                    status.update(label="발행 성공", state="complete")
-                    edit_line = next((ln for ln in buf if "post.php?post=" in ln), None)
-                    if edit_line:
-                        url = edit_line.split()[-1].strip()
-                        st.success(f"임시글 생성 완료: {url}")
-                else:
-                    status.update(label=f"오류 발생 ({rc})", state="error")
+    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">포스팅 생성</div><p style="color: #86868b; text-align: center;">AI가 독창적인 법률 본문을 작성하고<br>워드프레스에 임시글로 발행합니다</p></div>', unsafe_allow_html=True)
+    if st.button("생성 시작", key="btn_post", type="primary", use_container_width=True):
+        env_extra = {"IMAGES_ENABLED": "true" if images_enabled else "false"}
+        with st.status("발행 중...", expanded=True):
+            log_box = st.empty()
+            stream_subprocess([sys.executable, "-u", PUBLISH_SCRIPT], env_extra, log_box)
 
-# --- 카드 3: 데이터 분석 ---
 with col3:
-    st.markdown('<div class="studio-card"><div class="studio-card-title">데이터 분석</div><p style="color: #86868b; text-align: center;">발굴된 키워드 통계를 분석하고<br>공장 가동 현황을 확인합니다</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="studio-card"><div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">데이터 분석</div><p style="color: #86868b; text-align: center;">발굴된 키워드 통계를 분석하고<br>공장 가동 현황을 확인합니다</p></div>', unsafe_allow_html=True)
     if st.button("데이터 보기", key="btn_view", type="primary", use_container_width=True):
         st.session_state.show_data = True
 
-# 데이터 뷰 섹션
 if st.session_state.get("show_data", False):
     st.divider()
     if os.path.exists(CSV_PATH):
         df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("발굴 키워드", f"{len(df)}개")
-        c2.metric("최대 검색량", f"{int(df['total_volume'].max()):,}")
-        c3.metric("평균 검색량", f"{int(df['total_volume'].mean()):,}")
-        c4.metric("시드 카테고리", df['seed'].nunique() if 'seed' in df.columns else 0)
         st.dataframe(df, use_container_width=True, height=450)
-        st.download_button("데이터 추출 (CSV)", data=df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig"), file_name="law_seo_data.csv", use_container_width=True)
 
-# 7. A to Z 운영자 인수인계 매뉴얼 섹션
-st.markdown("""
-<div class='guide-box'>
-    <h2 style='text-align: center; margin-bottom: 50px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>
-    
-    <h3>Step 1. 워드프레스 임시글 확인 및 진입</h3>
-    <p>포스팅 생성 완료 후, 워드프레스 관리자 페이지의 <b>[글] > [모든 글]</b> 메뉴로 접속합니다.</p>
-    <div class='capture-spot'>[📸 여기에 사장님이 주신 '글 목록' 스크린샷 삽입 예정]</div>
-    <ul>
-        <li>목록에서 <b>'— 임시글'</b> 표시가 붙은 제목을 클릭하여 편집 화면으로 이동합니다.</li>
-    </ul>
+# ==========================================================
+# 7. 사장님표 A to Z 운영자 인수인계 매뉴얼 (최종 통합본)
+# ==========================================================
+st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-bottom: 60px;'>📑 법률 블로그 운영자 인수인계서 (A to Z)</h2>", unsafe_allow_html=True)
 
-    <h3 style='margin-top: 40px;'>Step 2. 인간 검수 (품질 관리)</h3>
-    <p>AI가 작성한 글을 사람이 최종적으로 다듬어 노출 확률을 높이는 단계입니다.</p>
-    <div class='capture-spot'>[📸 여기에 '워드프레스 글 편집기' 화면 스크린샷 삽입 예정]</div>
-    <ul>
-        <li><b>제목:</b> 키워드가 자연스럽게 포함되었는지 확인합니다.</li>
-        <li><b>가독성:</b> 문단 사이를 띄워주고, 중요한 포인트는 <b>굵게(Bold)</b> 처리합니다.</li>
-    </ul>
+# --- Step 1 ---
+st.markdown("<div class='manual-step'>", unsafe_allow_html=True)
+st.markdown("<div class='step-title'><div class='step-number'>1</div>1. 워드프레스 임시글 확인 및 진입</div>", unsafe_allow_html=True)
+st.markdown("포스팅 생성 완료 후, 워드프레스 관리자 페이지의 **[글] > [모든 글]** 메뉴로 접속합니다. 목록에서 작성된 제목을 클릭하여 편집 화면으로 들어갑니다.")
+st.image("step1.png", use_container_width=True)
+st.markdown("<div class='img-caption'>워드프레스 '모든 글' 목록 화면</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
-    <h3 style='margin-top: 40px;'>Step 3. 카테고리 및 태그 설정</h3>
-    <div class='capture-spot'>[📸 여기에 '우측 설정바 - 카테고리/태그' 스크린샷 삽입 예정]</div>
-    <ul>
-        <li><b>카테고리:</b> 해당 법률 주제에 맞는 카테고리를 정확히 체크합니다.</li>
-        <li><b>태그:</b> 관련 핵심 키워드 3~5개를 입력합니다.</li>
-    </ul>
+# --- Step 2 ---
+st.markdown("<div class='manual-step'>", unsafe_allow_html=True)
+st.markdown("<div class='step-title'><div class='step-number'>2</div>2. 과장님 검수 / RankMath SEO 설정 (중요)</div>", unsafe_allow_html=True)
+st.markdown("AI가 작성한 글을 사람이 최종적으로 다듬어 문맥상 이상한 부분이 없는지 체크하는 단계입니다.")
 
-    <h3 style='margin-top: 40px;'>Step 4. 즉시 발행 및 예약 발행</h3>
-    <div class='capture-spot'>[📸 여기에 '우측 상단 - 발행/예약 버튼' 주변 스크린샷 삽입 예정]</div>
-    <ul>
-        <li><b>즉시 발행:</b> 바로 공개하려면 파란색 <b>[발행]</b> 버튼을 누릅니다.</li>
-        <li><b>예약 발행:</b> [공개] 항목 옆의 '즉시' 버튼을 눌러 달력에서 <b>날짜와 시간</b>을 선택한 후 [예약] 버튼을 누릅니다.</li>
-    </ul>
-    
-    <div style='background: #fdf6e3; padding: 25px; border-radius: 20px; margin-top: 40px; border: 1px solid #faebcc;'>
-        <b>💡 팁:</b> 네이버 검색 노출을 위해 발행 후 URL을 <b>'네이버 서치어드바이저'</b>에 수집 요청하세요.
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("#### **1) 스니펫 편집**")
+st.markdown("제목, 퍼머링크, 설명(160자 이내)을 설정합니다. 해당 내용은 제미나이(Gemini)에 본문 글을 모두 복사 붙여넣기 후 아래 프롬프트를 사용하세요.")
+st.info("**프롬프트:** \"스니펫 편집에 필요한 제목, 퍼머링크, 설명(160자 이내)을 구글 SEO, AEO에 가장 최적화 하여 알려줘.\"")
+st.markdown("제미나이가 알려주는 대로 복사하여 붙여넣기 합니다.")
+st.image(["step2.jpg", "step2-1.png"], use_container_width=True)
+
+st.markdown("#### **2) 포커스 키워드**")
+st.markdown("제목의 **맨 첫 번째 키워드**를 포커스 키워드 란에 삽입합니다.")
+st.image("step2-2.jpg", use_container_width=True)
+
+st.markdown("#### **3) Rank Math 체크리스트 최적화**")
+st.markdown("Rank Math가 안내하는 **기본 SEO, 추가, 제목 가독성, 콘텐츠 가독성** 항목이 모두 초록색 체크표시(v)가 되도록 수정 및 보완하세요. **80점 이상**이면 OK입니다.")
+st.image(["step2-3.jpg", "step2-4.jpg"], use_container_width=True)
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- Step 3 ---
+st.markdown("<div class='manual-step'>", unsafe_allow_html=True)
+st.markdown("<div class='step-title'><div class='step-number'>3</div>3. 공개 일정 예약 및 발행</div>", unsafe_allow_html=True)
+st.markdown("구글 애드센스 승인을 위해 전문적인 콘텐츠 20개를 전략적으로 발행합니다.")
+st.warning("**발행 전략:** 20개 중 하루에 10개 콘텐츠를 즉시 업로드하고, 나머지 10개는 **매일 오전 9시**에 발행되도록 예약을 걸어둡니다.")
+
+col_img1, col_img2 = st.columns(2)
+with col_img1:
+    st.image("step3.jpg", caption="우측 상단 SEO 점수 및 공개 설정 확인")
+    st.image("step3-1.jpg", caption="[공개: 즉시] 클릭하여 달력 열기")
+with col_img2:
+    st.image("step3-2.jpg", caption="날짜와 시간(09:00) 설정 후 X 버튼 클릭")
+    st.image("step4.jpg", caption="마지막으로 우측 상단 [예약] 버튼 클릭 시 완료")
+
+st.success("💡 **마스터 팁:** 꾸준한 예약 발행은 블로그 지수를 높여 검색 상위 노출에 매우 유리합니다.")
+st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)

@@ -6,14 +6,14 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # [!] 버전 태그
-BUILD_TAG = "V2.0-MASSIVE-SQUARE-FINAL"
+BUILD_TAG = "V2.0-MASSIVE-TILE-FORCE-01"
 
-# 1. 인프라 및 경로 설정 (NameError 해결)
+# 1. 인프라 및 경로 설정
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FOLDER = os.path.join(PROJECT_DIR, "images")
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 os.environ["IMG_DIR"] = IMAGE_FOLDER
-CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv") # NameError 해결
+CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv") 
 
 if os.path.exists(os.path.join(PROJECT_DIR, ".env")):
     load_dotenv(os.path.join(PROJECT_DIR, ".env"))
@@ -24,10 +24,16 @@ if "factory_step" not in st.session_state:
 # 2. 페이지 설정
 st.set_page_config(page_title="워드프레스 공장 V2.0", layout="wide", initial_sidebar_state="collapsed")
 
-# 3. 🎨 프리미엄 스튜디오 디자인 (거대한 1:1 타일 & 완벽한 가독성)
+# 3. 🎨 프리미엄 스튜디오 디자인 (거대한 타일 강제 고정 & 완벽한 가독성)
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+    @keyframes rippleAnim {{
+        0% {{ box-shadow: 0 0 0 0 rgba(162, 103, 105, 0.4); transform: scale(1); }}
+        70% {{ box-shadow: 0 0 0 35px rgba(162, 103, 105, 0); transform: scale(1.02); }}
+        100% {{ box-shadow: 0 0 0 0 rgba(162, 103, 105, 0); transform: scale(1); }}
+    }}
 
     :root {{
         --bg-color: #FDF7F0; /* 따뜻한 크림색 */
@@ -35,32 +41,44 @@ st.markdown(f"""
         --pure-black: #1D1D1F !important;
     }}
 
-    html, body, [data-testid="stAppViewContainer"] {{
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
         background-color: var(--bg-color) !important;
     }}
 
-    /* 💥 압도적으로 큰 1:1 정방향 타일 강제 구현 💥 */
-    button[data-testid="baseButton-secondary"] {{
+    /* 💥 스트림릿 무시 방지: 거대한 버튼 강제 구현 💥 */
+    div[data-testid="stButton"] > button,
+    div.stButton > button {{
         background-color: #FFFFFF !important;
         color: #1D1D1F !important;
         border-radius: 40px !important;
-        border: 1px solid rgba(162, 103, 105, 0.2) !important;
+        border: 2px solid rgba(162, 103, 105, 0.2) !important;
         
+        /* 높이와 너비 무조건 꽉 채우기 */
         width: 100% !important;
-        min-height: 280px !important; /* 타일이 너무 작아지는 것 방지 */
-        aspect-ratio: 1 / 1 !important; /* 무조건 정사각형 */
+        height: 350px !important; /* 사장님, 높이를 350픽셀로 대폭 키웠습니다! */
         
-        font-size: 32px !important;
-        font-weight: 700 !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.04) !important;
+        font-size: 40px !important; /* 글씨도 거대하게 */
+        font-weight: 800 !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05) !important;
         transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-bottom: 20px !important;
     }}
 
-    button[data-testid="baseButton-secondary"]:hover {{
-        transform: translateY(-10px) !important;
-        box-shadow: 0 40px 80px rgba(162, 103, 105, 0.15) !important;
+    div[data-testid="stButton"] > button:hover,
+    div.stButton > button:hover {{
+        transform: translateY(-15px) !important;
+        box-shadow: 0 40px 80px rgba(162, 103, 105, 0.2) !important;
         border-color: var(--rose) !important;
         color: var(--rose) !important;
+    }}
+
+    .active-engine div[data-testid="stButton"] > button,
+    .active-engine div.stButton > button {{
+        animation: rippleAnim 2s infinite !important;
+        border: 5px solid var(--rose) !important;
     }}
 
     /* 로딩바 디자인 */
@@ -69,7 +87,7 @@ st.markdown(f"""
         height: 14px !important;
     }}
 
-    /* 📖 가이드 박스 - 따뜻하고 선명한 디자인 */
+    /* 📖 가이드 박스 - 초보자를 위한 따뜻하고 선명한 디자인 */
     .guide-box {{
         background-color: #FFFFFF !important;
         border-radius: 40px !important;
@@ -90,11 +108,10 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# 4. 🚨 안전한 파일 실행 엔진 (파일 유무 체크 강화)
+# 4. 🚨 안전한 파일 실행 엔진
 def run_factory_script(filename):
     script_path = os.path.join(PROJECT_DIR, filename)
     
-    # 깃허브에 파일이 안 올라가 있을 경우의 친절한 에러 메시지
     if not os.path.exists(script_path):
         st.error(f"🚨 '{filename}' 파일이 서버에 없습니다!\n\n사장님, 깃허브 저장소에 이 파일이 정상적으로 업로드되었는지 꼭 확인해 주세요.")
         return -1
@@ -115,18 +132,22 @@ st.markdown("<h1 style='text-align:center; color:#1D1D1F; font-size:64px; font-w
 col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
+    if st.session_state.factory_step == 1: st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("키워드 분석", key="btn1"):
         with st.status("🔍 네이버 API 연동 및 분석 중...", expanded=True):
             if run_factory_script("keyword_research.py") == 0:
                 st.session_state.factory_step = 2
                 st.rerun()
+    if st.session_state.factory_step == 1: st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
+    if st.session_state.factory_step == 2: st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("포스팅 생성", key="btn2"):
         with st.status("✍️ AI 본문 생성 중...", expanded=True):
             if run_factory_script("wp_content_generator.py") == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
+    if st.session_state.factory_step == 2: st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
     if st.button("데이터 분석", key="btn3"):
@@ -151,9 +172,9 @@ else:
     st.markdown("<h3 style='color:#1D1D1F;'>✅ 모든 공정 완료! 가이드를 따라 검수를 진행하세요.</h3>", unsafe_allow_html=True)
     st.progress(1.0)
 
-# 7. 📖 '가장 친절한' 워드프레스 검수 가이드
+# 7. 📖 초보자를 위한 '가장 친절한' 워드프레스 검수 가이드
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.markdown("<h1 style='text-align:center; color:#A26769 !important; margin-bottom:50px;'>📝 워드프레스 검수 가이드</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center; color:#A26769 !important; margin-bottom:50px;'>📝 워드프레스 초보자 검수 가이드</h1>", unsafe_allow_html=True)
 
 # Step 1
 st.markdown("<h2 style='color:#1D1D1F;'>1. 워드프레스 임시글 확인 및 진입</h2>", unsafe_allow_html=True)

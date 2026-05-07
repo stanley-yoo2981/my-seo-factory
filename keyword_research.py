@@ -13,7 +13,11 @@ import csv
 import requests
 from dotenv import load_dotenv
 
-load_dotenv("/Users/hello/Desktop/yeoon_aeo_system/.env")
+# 🚨 [핵심 수정 1] 사장님 맥북 경로를 지우고, 현재 파일 위치를 스스로 찾도록 변경했습니다.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 찾아낸 위치를 기반으로 .env 파일을 불러옵니다.
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 BASE_URL = "https://api.searchad.naver.com"
 API_KEY = os.getenv("NAVER_AD_ACCESS_KEY")
@@ -22,7 +26,9 @@ CUSTOMER_ID = os.getenv("NAVER_AD_CUSTOMER_ID")
 
 SEED_KEYWORDS = ["음주운전", "명예훼손", "형사고소"]
 MIN_VOLUME = 1500
-OUTPUT_CSV = "/Users/hello/Desktop/yeoon_aeo_system/keywords.csv"
+
+# 🚨 [핵심 수정 2] CSV 파일 저장 경로도 서버의 현재 폴더로 자동 지정되게 변경했습니다.
+OUTPUT_CSV = os.path.join(BASE_DIR, "keywords.csv")
 
 
 def make_signature(timestamp: str, method: str, uri: str, secret_key: str) -> str:

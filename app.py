@@ -69,7 +69,7 @@ st.markdown(f"""
         height: 14px !important;
     }}
 
-    /* 📖 가이드 박스 - 초보자를 위한 따뜻하고 선명한 디자인 */
+    /* 📖 가이드 박스 - 따뜻하고 선명한 디자인 */
     .guide-box {{
         background-color: #FFFFFF !important;
         border-radius: 40px !important;
@@ -151,9 +151,9 @@ else:
     st.markdown("<h3 style='color:#1D1D1F;'>✅ 모든 공정 완료! 가이드를 따라 검수를 진행하세요.</h3>", unsafe_allow_html=True)
     st.progress(1.0)
 
-# 7. 📖 초보자를 위한 '가장 친절한' 워드프레스 검수 가이드
+# 7. 📖 '가장 친절한' 워드프레스 검수 가이드
 st.markdown("<div class='guide-box'>", unsafe_allow_html=True)
-st.markdown("<h1 style='text-align:center; color:#A26769 !important; margin-bottom:50px;'>📝 워드프레스 초보자 검수 가이드</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center; color:#A26769 !important; margin-bottom:50px;'>📝 워드프레스 검수 가이드</h1>", unsafe_allow_html=True)
 
 # Step 1
 st.markdown("<h2 style='color:#1D1D1F;'>1. 워드프레스 임시글 확인 및 진입</h2>", unsafe_allow_html=True)

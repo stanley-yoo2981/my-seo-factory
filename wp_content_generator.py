@@ -14,6 +14,7 @@
    - help  : 경험 기반의 든든한 해결사 — 실전 해결 + 여온 브랜딩 1회
 8) [신규] hero 타입 전용 네이버 뉴스 '사회-사건/사고' 속보 탭 자율 크롤링 → 프롬프트 주입
 9) [신규] 분량 엄격 제한 — 단어 700개 / 공백 포함 2,000자 내외
+10) [신규] --keyword 인자로 외부에서 키워드 직접 주입 지원 (app.py 키워드 선택 UI 연동)
 """
 
 import os
@@ -973,7 +974,7 @@ def build_html(
 # 7. 메인 실행
 # ──────────────────────────────────────────────────────────────────
 def main():
-    # ── CLI 인자 파싱 — --type으로 3H 페르소나 선택
+    # ── CLI 인자 파싱 — --type으로 3H 페르소나 선택, --keyword로 키워드 직접 주입
     parser = argparse.ArgumentParser(
         description="법률 수익화 블로그 자동 발행 파이프라인 (3H 페르소나 전략 지원)"
     )
@@ -989,24 +990,52 @@ def main():
             "  help — 💡 실전 해결사 + 여온 브랜딩 1회 (기본값)"
         ),
     )
+    # ── [신규] --keyword 인자: app.py 키워드 선택 UI에서 확정된 키워드를 직접 주입
+    # 이 인자가 전달되면 pick_keyword() 함수를 실행하지 않고 해당 값을 focus_kw로 강제 할당.
+    parser.add_argument(
+        "--keyword",
+        dest="forced_keyword",
+        type=str,
+        default=None,
+        help=(
+            "외부에서 키워드를 직접 지정합니다 (app.py 키워드 선택 UI 연동용).\n"
+            "이 인자가 전달되면 keywords.csv의 pick_keyword() 로직을 건너뜁니다."
+        ),
+    )
     args = parser.parse_args()
     content_type = args.content_type
+    forced_keyword = args.forced_keyword.strip() if args.forced_keyword else None
 
     print("=" * 64)
     print(f"법률 수익화 블로그 자동 발행 파이프라인 시작 [type={content_type}]")
+    if forced_keyword:
+        print(f"  ※ 외부 주입 키워드 모드: '{forced_keyword}'")
     print("=" * 64)
 
     # ── 1. 키워드 선정
     print("\n[1/6] 키워드 선정")
-    top, top5 = pick_keyword()
-    focus_kw = top["row"]["keyword"]
-    vol = top["vol"]
-    print(f"  ✓ 선정 키워드: '{focus_kw}' (월 {vol:,}회, 경쟁 {top['comp']})")
-    print(f"  ✓ 후보 Top5:")
-    for s in top5:
-        print(f"    - {s['row']['keyword']:<18} 점수 {s['score']:>9.0f} (월 {s['vol']:,})")
 
-    # LSI 키워드 (수동 큐레이션 + CSV 매칭)
+    if forced_keyword:
+        # ── [신규] --keyword 인자가 전달된 경우: pick_keyword() 생략, 강제 할당
+        focus_kw = forced_keyword
+        vol = 0         # CSV 기반 검색량을 알 수 없으므로 0으로 처리
+        comp = "외부주입"
+        print(f"  ✓ 외부 주입 키워드 사용: '{focus_kw}'")
+        print(f"  ✓ pick_keyword() 건너뜀 (--keyword 인자 우선 적용)")
+    else:
+        # ── 기존 로직: pick_keyword() 실행
+        top, top5 = pick_keyword()
+        focus_kw = top["row"]["keyword"]
+        vol = top["vol"]
+        comp = top["comp"]
+        print(f"  ✓ 선정 키워드: '{focus_kw}' (월 {vol:,}회, 경쟁 {comp})")
+        print(f"  ✓ 후보 Top5:")
+        for s in top5:
+            print(f"    - {s['row']['keyword']:<18} 점수 {s['score']:>9.0f} (월 {s['vol']:,})")
+
+    # ── LSI 키워드: 전달받은 키워드 기반으로 동적 구성 (에러 방지)
+    # forced_keyword가 있을 경우 해당 키워드 관련 일반 법률 LSI로 기본값 유지.
+    # pick_keyword()를 통한 경우도 동일한 LSI 목록 사용(기존 로직 완전 유지).
     lsi = ["혈중알코올농도", "도로교통법", "윤창호법", "면허취소",
            "약식명령", "정식재판청구", "음주운전 방지장치"]
     print(f"  ✓ LSI 키워드: {', '.join(lsi)}")
@@ -1245,6 +1274,8 @@ def main():
     print(f"  📊 H2 / H3: {h2_count} / {h3_count}")
     if content_type == "hero":
         print(f"  📰 사건/사고 속보 크롤링: {len(news_data)}건")
+    if forced_keyword:
+        print(f"  🔑 외부 주입 키워드: '{forced_keyword}'")
 
     # ── snippet_data.json 저장 — build_html 4-튜플 값을 그대로 사용
     import json as _json

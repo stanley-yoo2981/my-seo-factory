@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 import base64
@@ -8,7 +9,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # [!] 업데이트 확인용 태그
-BUILD_TAG = "V3.0-GLASS-EDITION"
+BUILD_TAG = "V4.0-PROGRESS-EDITION"
 
 # 1. 인프라 및 경로 설정
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -82,7 +83,7 @@ st.markdown("""
         margin-bottom: 3.5rem;
     }
 
-    /* ── 메인 액션 버튼 (키워드 분석 / 데이터 분석) ── */
+    /* ── 메인 액션 버튼 (키워드 분석 / Hero / Hub / Help / 데이터 분석) ── */
     div[data-testid="stButton"] > button {
         background: rgba(255,255,255,0.52) !important;
         backdrop-filter: blur(28px) saturate(180%) !important;
@@ -94,11 +95,11 @@ st.markdown("""
             0 2px 8px rgba(80,60,120,0.04),
             inset 0 1px 0 rgba(255,255,255,0.92) !important;
         width: 100% !important;
-        min-height: 240px !important;
+        min-height: 200px !important;
         aspect-ratio: 1 / 1 !important;
         color: #1d1d1f !important;
         font-family: 'Noto Sans KR', sans-serif !important;
-        font-size: clamp(15px, 1.6vw, 20px) !important;
+        font-size: clamp(12px, 1.3vw, 17px) !important;
         font-weight: 700 !important;
         letter-spacing: -0.01em !important;
         line-height: 1.6 !important;
@@ -127,56 +128,6 @@ st.markdown("""
             0 14px 44px rgba(130,100,200,0.16),
             inset 0 1px 0 rgba(255,255,255,0.95) !important;
         background: rgba(255,255,255,0.66) !important;
-    }
-
-    /* ── 3H 패널 래퍼 ── */
-    .h3-panel {
-        background: rgba(255,255,255,0.44);
-        backdrop-filter: blur(24px) saturate(160%);
-        -webkit-backdrop-filter: blur(24px) saturate(160%);
-        border: 1px solid rgba(255,255,255,0.72);
-        border-radius: 28px;
-        box-shadow:
-            0 8px 32px rgba(80,60,120,0.07),
-            inset 0 1px 0 rgba(255,255,255,0.88);
-        padding: 20px 16px 16px 16px;
-        min-height: 240px;
-    }
-    .h3-panel-label {
-        text-align: center;
-        font-size: 11px;
-        font-weight: 700;
-        color: rgba(80,60,120,0.45);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        margin-bottom: 14px;
-    }
-    .active-panel {
-        border: 1.5px solid rgba(130,100,200,0.4) !important;
-        box-shadow:
-            0 0 0 5px rgba(130,100,200,0.08),
-            0 14px 44px rgba(130,100,200,0.14),
-            inset 0 1px 0 rgba(255,255,255,0.92) !important;
-    }
-
-    /* ── 3H 내부 버튼 ── */
-    .h3-button-wrap div[data-testid="stButton"] > button {
-        aspect-ratio: auto !important;
-        min-height: 60px !important;
-        font-size: 13.5px !important;
-        font-weight: 600 !important;
-        border-radius: 16px !important;
-        margin-bottom: 7px !important;
-        letter-spacing: -0.005em !important;
-        background: rgba(255,255,255,0.58) !important;
-        border: 1px solid rgba(255,255,255,0.82) !important;
-        color: #2a2040 !important;
-    }
-    .h3-button-wrap div[data-testid="stButton"] > button:hover {
-        min-height: 60px !important;
-        transform: translateY(-3px) scale(1.01) !important;
-        background: rgba(255,255,255,0.76) !important;
-        color: #4a3f6b !important;
     }
 
     /* ── 진행 배지 ── */
@@ -332,15 +283,16 @@ st.markdown("""
 
 
 # ── 스크립트 실행 헬퍼 ──────────────────────────────────────────────────
-def run_factory_script(filename, extra_args=None):
+# *args 로 "--type", "hero" 같은 가변 인자를 받아 subprocess cmd에 그대로 전달.
+# 로그는 모두 숨기고, [N/M] 패턴만 파싱해 실시간 프로그레스 바로 표시.
+# Traceback / Error / Exception 포함 라인만 예외적으로 st.error()로 붉게 노출.
+def run_factory_script(filename, *args):
     script_path = os.path.join(PROJECT_DIR, filename)
     if not os.path.exists(script_path):
         st.error(f"🚨 '{filename}' 파일이 없습니다!")
         return -1
     try:
-        cmd = [sys.executable, "-u", script_path]
-        if extra_args:
-            cmd.extend(extra_args)
+        cmd = [sys.executable, "-u", script_path, *args]
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -349,10 +301,81 @@ def run_factory_script(filename, extra_args=None):
             cwd=PROJECT_DIR,
             bufsize=1,
         )
+
+        # ── 실시간 프로그레스 바 + 단계 텍스트
+        progress_bar = st.progress(0)
+        status_text  = st.empty()
+        LOG_PATTERN  = re.compile(r"\[(\d+)/(\d+)\]\s*(.+)")
+
         for line in proc.stdout:
-            st.write(f"⚙️ {line.strip()}")
+            stripped = line.strip()
+
+            # 에러 키워드가 포함된 라인만 붉은색으로 노출
+            if any(kw in stripped for kw in ("Traceback", "Error", "Exception")):
+                st.error(stripped)
+                continue
+
+            # [N/M] 작업명 패턴 매칭 → 프로그레스 바 업데이트
+            m = LOG_PATTERN.search(stripped)
+            if m:
+                current   = int(m.group(1))
+                total     = int(m.group(2))
+                task_name = m.group(3).strip()
+                pct = min(current / total, 1.0)
+                progress_bar.progress(pct)
+                status_text.markdown(
+                    f"<div style='"
+                    f"background:rgba(255,255,255,0.58);"
+                    f"backdrop-filter:blur(16px);"
+                    f"border:1px solid rgba(255,255,255,0.82);"
+                    f"border-radius:99px;"
+                    f"padding:8px 20px;"
+                    f"font-size:13px;"
+                    f"font-weight:600;"
+                    f"color:#3a3050;"
+                    f"display:inline-block;"
+                    f"box-shadow:0 4px 16px rgba(80,60,120,0.07);'>"
+                    f"⚙️ &nbsp;진행 중: {task_name} &nbsp;"
+                    f"<span style='color:rgba(92,79,138,0.55);font-weight:500;'>"
+                    f"({current}/{total})</span></div>",
+                    unsafe_allow_html=True,
+                )
+
         proc.wait()
+
+        # ── 완료 / 실패 피드백
+        if proc.returncode == 0:
+            progress_bar.progress(1.0)
+            status_text.markdown(
+                "<div style='"
+                "background:rgba(40,170,120,0.1);"
+                "border:1px solid rgba(40,170,120,0.25);"
+                "border-radius:99px;"
+                "padding:8px 20px;"
+                "font-size:13px;"
+                "font-weight:700;"
+                "color:#1a6a50;"
+                "display:inline-block;'>"
+                "✅ &nbsp;완료!</div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            status_text.markdown(
+                "<div style='"
+                "background:rgba(255,80,60,0.08);"
+                "border:1px solid rgba(255,80,60,0.22);"
+                "border-radius:99px;"
+                "padding:8px 20px;"
+                "font-size:13px;"
+                "font-weight:700;"
+                "color:#b83232;"
+                "display:inline-block;'>"
+                "❌ &nbsp;오류가 발생했습니다. 위 에러 메시지를 확인하세요.</div>",
+                unsafe_allow_html=True,
+            )
+
         return proc.returncode
+
     except Exception as e:
         st.error(f"❌ 오류: {str(e)}")
         return -1
@@ -365,8 +388,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ── 메인 3열 레이아웃 ───────────────────────────────────────────────────
-col1, col2, col3 = st.columns([1, 1, 1], gap="large")
+# ── 메인 5열 레이아웃: [키워드분석] [Hero] [Hub] [Help] [데이터분석] ─────
+# 3H 버튼 3개가 기존 1:1 정방향 사각형 CSS를 그대로 상속받아 나란히 배치됨.
+col1, col_hero, col_hub, col_help, col3 = st.columns([1, 1, 1, 1, 1], gap="medium")
 
 # ── col1: 키워드 분석 ───────────────────────────────────────────────────
 with col1:
@@ -380,31 +404,41 @@ with col1:
     if st.session_state.factory_step == 1:
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ── col2: 3H 포스팅 생성 패널 ──────────────────────────────────────────
-with col2:
-    panel_cls = "active-panel" if st.session_state.factory_step == 2 else ""
-    st.markdown(f'<div class="h3-panel {panel_cls}"><div class="h3-panel-label">포스팅 생성 — 3H 전략</div>', unsafe_allow_html=True)
-    st.markdown('<div class="h3-button-wrap">', unsafe_allow_html=True)
-
-    if st.button("🔥  Hero — 가십·이슈 트래픽", key="btn_hero"):
-        with st.status("Hero 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", ["--type", "hero"]) == 0:
+# ── col_hero: 🔥 Hero 포스팅 ───────────────────────────────────────────
+with col_hero:
+    if st.session_state.factory_step == 2:
+        st.markdown('<div class="active-engine">', unsafe_allow_html=True)
+    if st.button("🔥\n\nHero\n가십·이슈", key="btn_hero"):
+        with st.status("🔥 Hero 포스팅 생성 중...", expanded=True):
+            if run_factory_script("wp_content_generator.py", "--type", "hero") == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
+    if st.session_state.factory_step == 2:
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("📚  Hub — 전문성·공유 브랜딩", key="btn_hub"):
-        with st.status("Hub 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", ["--type", "hub"]) == 0:
+# ── col_hub: 📚 Hub 포스팅 ─────────────────────────────────────────────
+with col_hub:
+    if st.session_state.factory_step == 2:
+        st.markdown('<div class="active-engine">', unsafe_allow_html=True)
+    if st.button("📚\n\nHub\n전문성·공유", key="btn_hub"):
+        with st.status("📚 Hub 포스팅 생성 중...", expanded=True):
+            if run_factory_script("wp_content_generator.py", "--type", "hub") == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
+    if st.session_state.factory_step == 2:
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("💡  Help — 실전 해결·여온 브랜딩", key="btn_help"):
-        with st.status("Help 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", ["--type", "help"]) == 0:
+# ── col_help: 💡 Help 포스팅 ───────────────────────────────────────────
+with col_help:
+    if st.session_state.factory_step == 2:
+        st.markdown('<div class="active-engine">', unsafe_allow_html=True)
+    if st.button("💡\n\nHelp\n실전 해결", key="btn_help"):
+        with st.status("💡 Help 포스팅 생성 중...", expanded=True):
+            if run_factory_script("wp_content_generator.py", "--type", "help") == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
-
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    if st.session_state.factory_step == 2:
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ── col3: 데이터 분석 ───────────────────────────────────────────────────
 with col3:

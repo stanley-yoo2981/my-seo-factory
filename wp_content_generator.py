@@ -25,7 +25,8 @@ from PIL import Image
 # ──────────────────────────────────────────────────────────────────
 # 환경설정
 # ──────────────────────────────────────────────────────────────────
-PROJECT_DIR = "/Users/hello/Desktop/yeoon_aeo_system"
+# 🚨 [수정됨] 하드코딩된 맥북 경로를 지우고, 서버 환경에 맞게 현재 디렉토리를 자동 추적하도록 변경했습니다.
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(PROJECT_DIR, ".env"))
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -36,13 +37,14 @@ WP_PASSWORD = os.getenv("WP_PASSWORD", "").replace(" ", "")
 CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
 IMG_DIR = os.path.join(PROJECT_DIR, "images")
 OUTPUT_HTML = os.path.join(PROJECT_DIR, "post_preview.html")
+
+# 이제 경로가 정확하므로 여기서 Permission Error가 발생하지 않습니다.
 os.makedirs(IMG_DIR, exist_ok=True)
 
-# ⚠ 긴급 지시(2026-05-06): OpenAI 결제 한도 초과로 DALL-E 3 호출 불가.
-#   이 플래그가 False일 동안은 이미지 생성/업로드를 완전히 스킵하고,
-#   HTML 본문 내 이미지 자리에는 주석형 플레이스홀더만 남긴다.
-#   결제 한도 해제 후 True로 전환 + 재실행하면 이미지 포함 버전이 새로 발행된다.
-IMAGES_ENABLED = False
+# ⚠ 이미지 생성 토글 — 환경변수 IMAGES_ENABLED로 런타임 제어 (Streamlit 토글에서 주입).
+#   기본값 false: DALL-E 호출/미디어 업로드 스킵, HTML 자리에 주석 플레이스홀더만 삽입.
+#   true 로 켜면 DALL-E 3 호출 + 미디어 업로드 + featured_media 연결까지 자동 진행.
+IMAGES_ENABLED = os.getenv("IMAGES_ENABLED", "false").strip().lower() in ("1", "true", "yes", "on")
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -234,7 +236,7 @@ DISCLAIMER = (
 MARK_STYLE = "background:#fef08a; padding:0 4px; border-radius:3px;"
 GLOSSARY_DT = "font-weight:700; color:#2b6cb0; margin-top:0.8rem;"
 GLOSSARY_DD = "margin:0.3rem 0 0.6rem 0; color:#444;"
-ADSENSE = "<!-- AdSense Ad Slot: 광고 위치 -->"
+ADSENSE = ""
 
 
 def build_html(focus_kw: str, lsi: list, img1: dict, img2: dict, img3: dict) -> str:
@@ -242,9 +244,7 @@ def build_html(focus_kw: str, lsi: list, img1: dict, img2: dict, img3: dict) -> 
     def img_block(img: dict, alt: str, caption: str, slot: str = ""):
         if not IMAGES_ENABLED or not img or not img.get("url"):
             return (
-                f'<!-- IMAGE_PLACEHOLDER ({slot}): '
-                f'alt="{alt}" | caption="{caption}" '
-                f'| DALL-E 3 결제 한도 해제 후 교체 예정 -->'
+                f''
             )
         return (
             f'<figure style="{IMG_WRAP}">'

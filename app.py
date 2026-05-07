@@ -9,7 +9,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # [!] 업데이트 확인용 태그
-BUILD_TAG = "V4.1-NEWS-HOOK-EDITION"
+BUILD_TAG = "V4.2-KEYWORD-SELECT-EDITION"
 
 # 1. 인프라 및 경로 설정
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +29,10 @@ if "factory_step" not in st.session_state:
 if "images_enabled" not in st.session_state:
     env_val = os.getenv("IMAGES_ENABLED", "false").strip().lower()
     st.session_state.images_enabled = env_val in ("1", "true", "yes", "on")
+
+# [신규] 선택된 키워드 초기값
+if "selected_keyword" not in st.session_state:
+    st.session_state.selected_keyword = None
 
 # 2. 페이지 세팅
 st.set_page_config(page_title="워드프레스 공장", layout="wide", initial_sidebar_state="collapsed")
@@ -270,6 +274,36 @@ st.markdown("""
         font-family: 'Noto Sans KR', sans-serif !important;
     }
 
+    /* ── 셀렉트박스 ── */
+    [data-testid="stSelectbox"] > div {
+        background: rgba(255,255,255,0.55) !important;
+        border: 1px solid rgba(190,175,225,0.3) !important;
+        border-radius: 12px !important;
+        font-family: 'Noto Sans KR', sans-serif !important;
+    }
+
+    /* ── 키워드 선택 박스 ── */
+    .keyword-select-box {
+        background: rgba(255,255,255,0.54);
+        backdrop-filter: blur(24px) saturate(160%);
+        border: 1px solid rgba(130,100,200,0.25);
+        border-radius: 20px;
+        padding: 22px 28px;
+        box-shadow: 0 8px 32px rgba(80,60,120,0.07), inset 0 1px 0 rgba(255,255,255,0.92);
+        margin-bottom: 28px;
+    }
+    .keyword-select-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: #3a3050;
+        margin-bottom: 4px;
+    }
+    .keyword-select-sub {
+        font-size: 12px;
+        color: rgba(60,50,80,0.48);
+        margin-bottom: 14px;
+    }
+
     /* ── 구분선 ── */
     hr { border-color: rgba(150,130,200,0.12) !important; }
 
@@ -412,7 +446,6 @@ st.markdown("""
 
 
 # ── 메인 5열 레이아웃: [키워드분석] [Hero] [Hub] [Help] [데이터분석] ─────
-# 3H 버튼 3개가 기존 1:1 정방향 사각형 CSS를 그대로 상속받아 나란히 배치됨.
 col1, col_hero, col_hub, col_help, col3 = st.columns([1, 1, 1, 1, 1], gap="medium")
 
 # ── col1: 키워드 분석 ───────────────────────────────────────────────────
@@ -423,6 +456,7 @@ with col1:
         with st.status("분석 중...", expanded=True):
             if run_factory_script("keyword_research.py") == 0:
                 st.session_state.factory_step = 2
+                st.session_state.selected_keyword = None  # 키워드 선택 초기화
                 st.rerun()
     if st.session_state.factory_step == 1:
         st.markdown("</div>", unsafe_allow_html=True)
@@ -432,8 +466,12 @@ with col_hero:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("🔥\n\nHero\n가십·이슈", key="btn_hero"):
+        kw = st.session_state.get("selected_keyword")
         with st.status("🔥 Hero 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", "--type", "hero") == 0:
+            args = ["--type", "hero"]
+            if kw:
+                args += ["--keyword", kw]
+            if run_factory_script("wp_content_generator.py", *args) == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
     if st.session_state.factory_step == 2:
@@ -444,8 +482,12 @@ with col_hub:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("📚\n\nHub\n전문성·공유", key="btn_hub"):
+        kw = st.session_state.get("selected_keyword")
         with st.status("📚 Hub 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", "--type", "hub") == 0:
+            args = ["--type", "hub"]
+            if kw:
+                args += ["--keyword", kw]
+            if run_factory_script("wp_content_generator.py", *args) == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
     if st.session_state.factory_step == 2:
@@ -456,8 +498,12 @@ with col_help:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("💡\n\nHelp\n실전 해결", key="btn_help"):
+        kw = st.session_state.get("selected_keyword")
         with st.status("💡 Help 포스팅 생성 중...", expanded=True):
-            if run_factory_script("wp_content_generator.py", "--type", "help") == 0:
+            args = ["--type", "help"]
+            if kw:
+                args += ["--keyword", kw]
+            if run_factory_script("wp_content_generator.py", *args) == 0:
                 st.session_state.factory_step = 3
                 st.rerun()
     if st.session_state.factory_step == 2:
@@ -472,6 +518,50 @@ if st.session_state.get("show_data", False):
     st.divider()
     if os.path.exists(CSV_PATH):
         st.dataframe(pd.read_csv(CSV_PATH, encoding="utf-8-sig"), use_container_width=True)
+
+
+# ── [신규] 키워드 선택 UI — 2단계 진입 후 Hero/Hub/Help 버튼 아래 표시 ──
+if st.session_state.factory_step == 2:
+    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="keyword-select-box">
+        <div class="keyword-select-title">🔑 발행 키워드 선택</div>
+        <div class="keyword-select-sub">
+            키워드를 선택하면 Hero / Hub / Help 버튼 클릭 시 해당 키워드로 고정 발행됩니다.<br>
+            선택하지 않으면 keywords.csv에서 점수 1위 키워드가 자동 선정됩니다.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if os.path.exists(CSV_PATH):
+        df_kw = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
+        keyword_list = df_kw["keyword"].dropna().tolist()
+
+        # 자동 선정 옵션을 맨 앞에 추가
+        options = ["⚡ 자동 선정 (점수 1위)"] + keyword_list
+
+        current_kw = st.session_state.get("selected_keyword")
+        default_idx = 0
+        if current_kw and current_kw in keyword_list:
+            default_idx = keyword_list.index(current_kw) + 1  # +1: 자동 선정 옵션 offset
+
+        selected = st.selectbox(
+            "키워드를 선택하세요",
+            options=options,
+            index=default_idx,
+            key="keyword_selectbox",
+            label_visibility="collapsed",
+        )
+
+        if selected == "⚡ 자동 선정 (점수 1위)":
+            st.session_state.selected_keyword = None
+            st.info("⚡ 자동 선정 모드 — keywords.csv 점수 1위 키워드가 사용됩니다.")
+        else:
+            st.session_state.selected_keyword = selected
+            st.success(f"✅ 선택된 키워드: **{selected}**")
+    else:
+        st.warning("⚠️ keywords.csv 파일이 없습니다. 먼저 키워드 분석을 실행하세요.")
+        st.session_state.selected_keyword = None
 
 
 # ── 진행 단계 표시 ──────────────────────────────────────────────────────

@@ -4,37 +4,40 @@ import sys
 import subprocess
 import base64
 import json
+import random
+import urllib.request
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
 # [!] 업데이트 확인용 태그
-BUILD_TAG = "V4.2-KEYWORD-SELECT-EDITION"
+BUILD_TAG = "V5.0-2STAGE-KEYWORD-EDITION"
 
-# 1. 인프라 및 경로 설정
+# ── 1. 인프라 및 경로 설정 ──────────────────────────────────────────────
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FOLDER = os.path.join(PROJECT_DIR, "images")
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 os.environ["IMG_DIR"] = IMAGE_FOLDER
-CSV_PATH = os.path.join(PROJECT_DIR, "keywords.csv")
+CSV_PATH     = os.path.join(PROJECT_DIR, "keywords.csv")
 SNIPPET_PATH = os.path.join(PROJECT_DIR, "snippet_data.json")
 
 if os.path.exists(os.path.join(PROJECT_DIR, ".env")):
     load_dotenv(os.path.join(PROJECT_DIR, ".env"))
 
-if "factory_step" not in st.session_state:
-    st.session_state.factory_step = 1
-
-# IMAGES_ENABLED 초기값 — .env에 설정된 값 우선, 없으면 False
-if "images_enabled" not in st.session_state:
+# ── session_state 초기값 ────────────────────────────────────────────────
+if "factory_step"        not in st.session_state: st.session_state.factory_step        = 1
+if "images_enabled"      not in st.session_state:
     env_val = os.getenv("IMAGES_ENABLED", "false").strip().lower()
     st.session_state.images_enabled = env_val in ("1", "true", "yes", "on")
+if "show_data"           not in st.session_state: st.session_state.show_data           = False
 
-# [신규] 선택된 키워드 초기값
-if "selected_keyword" not in st.session_state:
-    st.session_state.selected_keyword = None
+# 2단계 키워드 UI 상태
+if "active_type"         not in st.session_state: st.session_state.active_type         = None   # "hero"|"hub"|"help"|None
+if "hero_candidates"     not in st.session_state: st.session_state.hero_candidates     = []
+if "hub_candidates"      not in st.session_state: st.session_state.hub_candidates      = []
+if "help_page"           not in st.session_state: st.session_state.help_page           = 0      # 0→1위~5위, 1→6~10위, 2→11~15위
 
-# 2. 페이지 세팅
+# ── 2. 페이지 세팅 ─────────────────────────────────────────────────────
 st.set_page_config(page_title="워드프레스 공장", layout="wide", initial_sidebar_state="collapsed")
 
 # ── 사이드바: DALL-E 이미지 생성 토글 ──────────────────────────────────
@@ -55,7 +58,7 @@ with st.sidebar:
     else:
         st.info("🚫 이미지 생성 OFF — 플레이스홀더 삽입")
 
-# 3. 🎨 Apple Glass UI
+# ── 3. 🎨 Apple Glass UI ─────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
@@ -110,7 +113,7 @@ st.markdown("""
         margin-bottom: 3.5rem;
     }
 
-    /* ── 메인 액션 버튼 (키워드 분석 / Hero / Hub / Help / 데이터 분석) ── */
+    /* ── 메인 액션 버튼 ── */
     div[data-testid="stButton"] > button {
         background: rgba(255,255,255,0.52) !important;
         backdrop-filter: blur(28px) saturate(180%) !important;
@@ -220,9 +223,9 @@ st.markdown("""
         margin-left: 8px;
         vertical-align: middle;
     }
-    .badge-hero { background: rgba(255,100,80,0.1); color: #b83232; border: 1px solid rgba(255,100,80,0.22); }
-    .badge-hub  { background: rgba(70,120,240,0.1); color: #1a4ec4; border: 1px solid rgba(70,120,240,0.22); }
-    .badge-help { background: rgba(40,170,120,0.1); color: #1a6a50; border: 1px solid rgba(40,170,120,0.22); }
+    .badge-hero { background: rgba(255,100,80,0.1);  color: #b83232; border: 1px solid rgba(255,100,80,0.22); }
+    .badge-hub  { background: rgba(70,120,240,0.1);  color: #1a4ec4; border: 1px solid rgba(70,120,240,0.22); }
+    .badge-help { background: rgba(40,170,120,0.1);  color: #1a6a50; border: 1px solid rgba(40,170,120,0.22); }
 
     /* ── 워드프레스 이동 버튼 ── */
     .link-button {
@@ -282,26 +285,33 @@ st.markdown("""
         font-family: 'Noto Sans KR', sans-serif !important;
     }
 
-    /* ── 키워드 선택 박스 ── */
-    .keyword-select-box {
-        background: rgba(255,255,255,0.54);
-        backdrop-filter: blur(24px) saturate(160%);
-        border: 1px solid rgba(130,100,200,0.25);
-        border-radius: 20px;
-        padding: 22px 28px;
-        box-shadow: 0 8px 32px rgba(80,60,120,0.07), inset 0 1px 0 rgba(255,255,255,0.92);
-        margin-bottom: 28px;
+    /* ── 키워드 선택 박스 (2단계 UI) ── */
+    .kw-panel {
+        background: rgba(255,255,255,0.60);
+        backdrop-filter: blur(28px) saturate(170%);
+        border: 1px solid rgba(130,100,200,0.22);
+        border-radius: 24px;
+        padding: 28px 34px 24px;
+        box-shadow: 0 10px 40px rgba(80,60,120,0.09), inset 0 1px 0 rgba(255,255,255,0.94);
+        margin-top: 28px;
+        margin-bottom: 8px;
     }
-    .keyword-select-title {
-        font-size: 15px;
+    .kw-panel-title {
+        font-size: 16px;
         font-weight: 800;
         color: #3a3050;
         margin-bottom: 4px;
     }
-    .keyword-select-sub {
-        font-size: 12px;
+    .kw-panel-sub {
+        font-size: 12.5px;
         color: rgba(60,50,80,0.48);
-        margin-bottom: 14px;
+        margin-bottom: 18px;
+        line-height: 1.7;
+    }
+    .kw-divider {
+        border: none;
+        border-top: 1px solid rgba(150,130,200,0.14);
+        margin: 18px 0;
     }
 
     /* ── 구분선 ── */
@@ -340,9 +350,6 @@ st.markdown("""
 
 
 # ── 스크립트 실행 헬퍼 ──────────────────────────────────────────────────
-# *args 로 "--type", "hero" 같은 가변 인자를 받아 subprocess cmd에 그대로 전달.
-# 로그는 모두 숨기고, [N/M] 패턴만 파싱해 실시간 프로그레스 바로 표시.
-# Traceback / Error / Exception 포함 라인만 예외적으로 st.error()로 붉게 노출.
 def run_factory_script(filename, *args):
     script_path = os.path.join(PROJECT_DIR, filename)
     if not os.path.exists(script_path):
@@ -359,20 +366,15 @@ def run_factory_script(filename, *args):
             bufsize=1,
         )
 
-        # ── 실시간 프로그레스 바 + 단계 텍스트
         progress_bar = st.progress(0)
         status_text  = st.empty()
         LOG_PATTERN  = re.compile(r"\[(\d+(?:\.\d+)?)/(\d+)\]\s*(.+)")
 
         for line in proc.stdout:
             stripped = line.strip()
-
-            # 에러 키워드가 포함된 라인만 붉은색으로 노출
             if any(kw in stripped for kw in ("Traceback", "Error", "Exception")):
                 st.error(stripped)
                 continue
-
-            # [N/M] 작업명 패턴 매칭 → 프로그레스 바 업데이트
             m = LOG_PATTERN.search(stripped)
             if m:
                 current   = float(m.group(1))
@@ -400,7 +402,6 @@ def run_factory_script(filename, *args):
 
         proc.wait()
 
-        # ── 완료 / 실패 피드백
         if proc.returncode == 0:
             progress_bar.progress(1.0)
             status_text.markdown(
@@ -430,13 +431,93 @@ def run_factory_script(filename, *args):
                 "❌ &nbsp;오류가 발생했습니다. 위 에러 메시지를 확인하세요.</div>",
                 unsafe_allow_html=True,
             )
-
         return proc.returncode
 
     except Exception as e:
         st.error(f"❌ 오류: {str(e)}")
         return -1
 
+
+# ── Hero 키워드 후보 크롤링/생성 ────────────────────────────────────────
+def fetch_hero_candidates():
+    """
+    네이버 뉴스 사건사고 섹션을 가볍게 크롤링하여 헤드라인 기반 키워드 3개를 반환.
+    크롤링 실패 시 기본 후보를 반환.
+    """
+    fallback = [
+        "오늘의 사건사고 법률 이슈",
+        "최신 판결 이슈 분석",
+        "이번 주 화제의 법률 뉴스",
+    ]
+    try:
+        url = "https://news.naver.com/section/102"  # 사회 섹션
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+
+        # 헤드라인 텍스트 간단 추출 (og:title 또는 <a> 내 짧은 텍스트)
+        titles = re.findall(r'<a[^>]+class="[^"]*headlines[^"]*"[^>]*>([^<]{8,40})</a>', html)
+        if not titles:
+            titles = re.findall(r'<strong[^>]*>([가-힣][^<]{5,35})</strong>', html)
+
+        headlines = list(dict.fromkeys([t.strip() for t in titles if len(t.strip()) >= 6]))[:8]
+
+        if len(headlines) >= 3:
+            sampled = random.sample(headlines, 3)
+            return sampled
+        elif len(headlines) > 0:
+            return (headlines + fallback)[:3]
+        else:
+            return fallback
+    except Exception:
+        return fallback
+
+
+# ── Hub 키워드 후보 생성 ─────────────────────────────────────────────────
+def fetch_hub_candidates():
+    """
+    네이버 자동완성/연관검색어 느낌의 정보성 키워드 풀에서 3~5개를 반환.
+    실제 API 연동 없이 고품질 법률 정보성 키워드 풀을 구성하여 무작위 제공.
+    """
+    pool = [
+        "민사소송 절차 총정리",
+        "형사고소 방법과 주의사항",
+        "계약서 작성 필수 체크리스트",
+        "부동산 전세 사기 예방법",
+        "상속 포기 한정승인 차이",
+        "이혼 재산분할 기준 총정리",
+        "근로계약서 없이 일했을 때 대처법",
+        "명예훼손 고소 성립 요건",
+        "개인파산 신청 조건과 절차",
+        "교통사고 합의 요령과 주의점",
+        "임대차 분쟁 해결 완벽 가이드",
+        "소액심판 청구 방법과 비용",
+        "성희롱 직장 내 대처 절차",
+        "공정거래법 위반 신고 방법",
+        "저작권 침해 대응 완벽 정리",
+    ]
+    return random.sample(pool, min(5, len(pool)))
+
+
+# ── 이미지 헬퍼 ────────────────────────────────────────────────────────
+def get_img_html(filename):
+    img_path = os.path.join(PROJECT_DIR, filename)
+    if os.path.exists(img_path):
+        with open(img_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("utf-8")
+        return (
+            f'<img src="data:image/png;base64,{encoded}" '
+            'style="width:100%; max-width:800px; border-radius:16px; '
+            'margin:20px 0; box-shadow:0 8px 32px rgba(80,60,120,0.1);">'
+        )
+    return ""
+
+
+# ════════════════════════════════════════════════════════════════════════
+#  RENDER START
+# ════════════════════════════════════════════════════════════════════════
 
 # ── 타이틀 ─────────────────────────────────────────────────────────────
 st.markdown("""
@@ -456,63 +537,61 @@ with col1:
         with st.status("분석 중...", expanded=True):
             if run_factory_script("keyword_research.py") == 0:
                 st.session_state.factory_step = 2
-                st.session_state.selected_keyword = None  # 키워드 선택 초기화
+                st.session_state.active_type  = None  # 키워드 패널 닫기
                 st.rerun()
     if st.session_state.factory_step == 1:
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ── col_hero: 🔥 Hero 포스팅 ───────────────────────────────────────────
+# ── col_hero: 🔥 Hero 버튼 ─────────────────────────────────────────────
 with col_hero:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("🔥\n\nHero\n가십·이슈", key="btn_hero"):
-        kw = st.session_state.get("selected_keyword")
-        with st.status("🔥 Hero 포스팅 생성 중...", expanded=True):
-            args = ["--type", "hero"]
-            if kw:
-                args += ["--keyword", kw]
-            if run_factory_script("wp_content_generator.py", *args) == 0:
-                st.session_state.factory_step = 3
-                st.rerun()
+        if st.session_state.active_type == "hero":
+            # 이미 열려있으면 닫기
+            st.session_state.active_type = None
+        else:
+            st.session_state.active_type = "hero"
+            # 후보 새로 생성
+            with st.spinner("뉴스 헤드라인 로딩 중..."):
+                st.session_state.hero_candidates = fetch_hero_candidates()
+        st.rerun()
     if st.session_state.factory_step == 2:
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ── col_hub: 📚 Hub 포스팅 ─────────────────────────────────────────────
+# ── col_hub: 📚 Hub 버튼 ───────────────────────────────────────────────
 with col_hub:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("📚\n\nHub\n전문성·공유", key="btn_hub"):
-        kw = st.session_state.get("selected_keyword")
-        with st.status("📚 Hub 포스팅 생성 중...", expanded=True):
-            args = ["--type", "hub"]
-            if kw:
-                args += ["--keyword", kw]
-            if run_factory_script("wp_content_generator.py", *args) == 0:
-                st.session_state.factory_step = 3
-                st.rerun()
+        if st.session_state.active_type == "hub":
+            st.session_state.active_type = None
+        else:
+            st.session_state.active_type = "hub"
+            st.session_state.hub_candidates = fetch_hub_candidates()
+        st.rerun()
     if st.session_state.factory_step == 2:
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ── col_help: 💡 Help 포스팅 ───────────────────────────────────────────
+# ── col_help: 💡 Help 버튼 ─────────────────────────────────────────────
 with col_help:
     if st.session_state.factory_step == 2:
         st.markdown('<div class="active-engine">', unsafe_allow_html=True)
     if st.button("💡\n\nHelp\n실전 해결", key="btn_help"):
-        kw = st.session_state.get("selected_keyword")
-        with st.status("💡 Help 포스팅 생성 중...", expanded=True):
-            args = ["--type", "help"]
-            if kw:
-                args += ["--keyword", kw]
-            if run_factory_script("wp_content_generator.py", *args) == 0:
-                st.session_state.factory_step = 3
-                st.rerun()
+        if st.session_state.active_type == "help":
+            st.session_state.active_type = None
+        else:
+            st.session_state.active_type = "help"
+            st.session_state.help_page   = 0
+        st.rerun()
     if st.session_state.factory_step == 2:
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ── col3: 데이터 분석 ───────────────────────────────────────────────────
 with col3:
     if st.button("📊\n\n데이터 분석", key="btn3"):
-        st.session_state.show_data = True
+        st.session_state.show_data = not st.session_state.get("show_data", False)
+        st.rerun()
 
 if st.session_state.get("show_data", False):
     st.divider()
@@ -520,57 +599,212 @@ if st.session_state.get("show_data", False):
         st.dataframe(pd.read_csv(CSV_PATH, encoding="utf-8-sig"), use_container_width=True)
 
 
-# ── [신규] 키워드 선택 UI — 2단계 진입 후 Hero/Hub/Help 버튼 아래 표시 ──
-if st.session_state.factory_step == 2:
-    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+# ════════════════════════════════════════════════════════════════════════
+#  2단계 키워드 선택 패널 (Hero / Hub / Help 각각)
+# ════════════════════════════════════════════════════════════════════════
+
+active = st.session_state.get("active_type")
+
+# ─────────────────────────────────────────────────────────────────────
+#  🔥 HERO 키워드 패널
+# ─────────────────────────────────────────────────────────────────────
+if active == "hero" and st.session_state.factory_step == 2:
     st.markdown("""
-    <div class="keyword-select-box">
-        <div class="keyword-select-title">🔑 발행 키워드 선택</div>
-        <div class="keyword-select-sub">
-            키워드를 선택하면 Hero / Hub / Help 버튼 클릭 시 해당 키워드로 고정 발행됩니다.<br>
-            선택하지 않으면 keywords.csv에서 점수 1위 키워드가 자동 선정됩니다.
+    <div class="kw-panel">
+        <div class="kw-panel-title">🔥 Hero — 이슈/가십 키워드 선택</div>
+        <div class="kw-panel-sub">
+            네이버 뉴스 사건사고 헤드라인 기반 추천 키워드입니다.<br>
+            라디오 버튼으로 선택하거나, 직접 입력하세요.<br>
+            <b>직접 입력값이 있으면 라디오 선택은 무시됩니다.</b>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    candidates = st.session_state.hero_candidates or fetch_hero_candidates()
+
+    col_r1, col_r2 = st.columns([3, 1])
+    with col_r1:
+        hero_radio = st.radio(
+            "현재 이슈 기반 추천 키워드",
+            options=candidates,
+            key="hero_radio",
+            label_visibility="visible",
+        )
+    with col_r2:
+        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+        if st.button("🔄 다른 키워드 후보 추출", key="hero_refresh"):
+            with st.spinner("헤드라인 재크롤링 중..."):
+                st.session_state.hero_candidates = fetch_hero_candidates()
+            st.rerun()
+
+    hero_manual = st.text_input(
+        "✏️ 직접 입력 (입력 시 라디오 무시)",
+        placeholder="예: 강남 살인사건 법률 해석",
+        key="hero_manual",
+    )
+
+    st.markdown("<hr class='kw-divider'>", unsafe_allow_html=True)
+
+    if st.button("✍️ 포스팅 최종 생성하기", key="hero_submit", type="primary"):
+        final_keyword = hero_manual.strip() if hero_manual.strip() else hero_radio
+        with st.status(f"🔥 Hero 포스팅 생성 중 — 키워드: {final_keyword}", expanded=True):
+            ret = run_factory_script(
+                "wp_content_generator.py",
+                "--type", "hero",
+                "--keyword", final_keyword,
+            )
+            if ret == 0:
+                st.session_state.factory_step = 3
+                st.session_state.active_type  = None
+                st.rerun()
+
+# ─────────────────────────────────────────────────────────────────────
+#  📚 HUB 키워드 패널
+# ─────────────────────────────────────────────────────────────────────
+elif active == "hub" and st.session_state.factory_step == 2:
+    st.markdown("""
+    <div class="kw-panel">
+        <div class="kw-panel-title">📚 Hub — 정보성/검색어 키워드 선택</div>
+        <div class="kw-panel-sub">
+            네이버 연관검색어·자동완성 스타일의 정보성 키워드 후보입니다.<br>
+            라디오 버튼으로 선택하거나, 직접 입력하세요.<br>
+            <b>직접 입력값이 있으면 라디오 선택은 무시됩니다.</b>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    candidates = st.session_state.hub_candidates or fetch_hub_candidates()
+
+    col_r1, col_r2 = st.columns([3, 1])
+    with col_r1:
+        hub_radio = st.radio(
+            "정보성 추천 키워드",
+            options=candidates,
+            key="hub_radio",
+            label_visibility="visible",
+        )
+    with col_r2:
+        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+        if st.button("🔄 다른 키워드 불러오기", key="hub_refresh"):
+            st.session_state.hub_candidates = fetch_hub_candidates()
+            st.rerun()
+
+    hub_manual = st.text_input(
+        "✏️ 직접 입력 (입력 시 라디오 무시)",
+        placeholder="예: 전세 사기 피해 대처법",
+        key="hub_manual",
+    )
+
+    st.markdown("<hr class='kw-divider'>", unsafe_allow_html=True)
+
+    if st.button("✍️ 포스팅 최종 생성하기", key="hub_submit", type="primary"):
+        final_keyword = hub_manual.strip() if hub_manual.strip() else hub_radio
+        with st.status(f"📚 Hub 포스팅 생성 중 — 키워드: {final_keyword}", expanded=True):
+            ret = run_factory_script(
+                "wp_content_generator.py",
+                "--type", "hub",
+                "--keyword", final_keyword,
+            )
+            if ret == 0:
+                st.session_state.factory_step = 3
+                st.session_state.active_type  = None
+                st.rerun()
+
+# ─────────────────────────────────────────────────────────────────────
+#  💡 HELP 키워드 패널
+# ─────────────────────────────────────────────────────────────────────
+elif active == "help" and st.session_state.factory_step == 2:
+    st.markdown("""
+    <div class="kw-panel">
+        <div class="kw-panel-title">💡 Help — 수익성/CSV 키워드 선택</div>
+        <div class="kw-panel-sub">
+            keywords.csv 점수 상위 키워드입니다. 페이지를 넘겨 원하는 키워드를 선택하세요.<br>
+            라디오 버튼으로 선택하거나, 직접 입력하세요.<br>
+            <b>직접 입력값이 있으면 라디오 선택은 무시됩니다.</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     if os.path.exists(CSV_PATH):
         df_kw = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
-        keyword_list = df_kw["keyword"].dropna().tolist()
 
-        # 자동 선정 옵션을 맨 앞에 추가
-        options = ["⚡ 자동 선정 (점수 1위)"] + keyword_list
+        # 점수 컬럼 자동 감지 (score, 점수, Score 등)
+        score_cols = [c for c in df_kw.columns if "score" in c.lower() or "점수" in c]
+        if score_cols:
+            df_kw = df_kw.sort_values(score_cols[0], ascending=False).reset_index(drop=True)
 
-        current_kw = st.session_state.get("selected_keyword")
-        default_idx = 0
-        if current_kw and current_kw in keyword_list:
-            default_idx = keyword_list.index(current_kw) + 1  # +1: 자동 선정 옵션 offset
+        keyword_col = "keyword" if "keyword" in df_kw.columns else df_kw.columns[0]
+        all_keywords = df_kw[keyword_col].dropna().tolist()
 
-        selected = st.selectbox(
-            "키워드를 선택하세요",
-            options=options,
-            index=default_idx,
-            key="keyword_selectbox",
-            label_visibility="collapsed",
-        )
+        page      = st.session_state.help_page          # 0, 1, 2
+        start_idx = page * 5
+        end_idx   = start_idx + 5
+        page_kws  = all_keywords[start_idx:end_idx]
 
-        if selected == "⚡ 자동 선정 (점수 1위)":
-            st.session_state.selected_keyword = None
-            st.info("⚡ 자동 선정 모드 — keywords.csv 점수 1위 키워드가 사용됩니다.")
-        else:
-            st.session_state.selected_keyword = selected
-            st.success(f"✅ 선택된 키워드: **{selected}**")
+        # 페이지 라벨
+        page_label = f"{start_idx+1}위 ~ {min(end_idx, len(all_keywords))}위"
+        st.caption(f"📄 현재 표시: **{page_label}** (총 {len(all_keywords)}개)")
+
+        col_r1, col_r2 = st.columns([3, 1])
+        with col_r1:
+            if page_kws:
+                help_radio = st.radio(
+                    "CSV 상위 키워드",
+                    options=page_kws,
+                    key=f"help_radio_{page}",
+                    label_visibility="visible",
+                )
+            else:
+                st.warning("이 페이지에 키워드가 없습니다.")
+                help_radio = None
+        with col_r2:
+            st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+            # 다음 페이지 버튼 (순환)
+            total_pages = max(1, (len(all_keywords) + 4) // 5)
+            next_label  = f"🔄 다음 키워드 목록 보기\n({((page+1)%total_pages)*5+1}위~)"
+            if st.button(next_label, key="help_next_page"):
+                st.session_state.help_page = (page + 1) % total_pages
+                st.rerun()
     else:
         st.warning("⚠️ keywords.csv 파일이 없습니다. 먼저 키워드 분석을 실행하세요.")
-        st.session_state.selected_keyword = None
+        help_radio = None
+
+    help_manual = st.text_input(
+        "✏️ 직접 입력 (입력 시 라디오 무시)",
+        placeholder="예: 교통사고 합의 요령",
+        key="help_manual",
+    )
+
+    st.markdown("<hr class='kw-divider'>", unsafe_allow_html=True)
+
+    if st.button("✍️ 포스팅 최종 생성하기", key="help_submit", type="primary"):
+        if help_manual.strip():
+            final_keyword = help_manual.strip()
+        elif help_radio:
+            final_keyword = help_radio
+        else:
+            st.error("키워드를 선택하거나 직접 입력해 주세요.")
+            st.stop()
+
+        with st.status(f"💡 Help 포스팅 생성 중 — 키워드: {final_keyword}", expanded=True):
+            ret = run_factory_script(
+                "wp_content_generator.py",
+                "--type", "help",
+                "--keyword", final_keyword,
+            )
+            if ret == 0:
+                st.session_state.factory_step = 3
+                st.session_state.active_type  = None
+                st.rerun()
 
 
 # ── 진행 단계 표시 ──────────────────────────────────────────────────────
 st.markdown("<div style='margin-top:52px;'></div>", unsafe_allow_html=True)
 
 step_info = {
-    1: ("○ ○ ○", "1단계 대기 중", 0.0),
+    1: ("○ ○ ○", "1단계 대기 중",   0.0),
     2: ("● ○ ○", "2단계 준비 완료", 0.5),
-    3: ("● ● ●", "모든 공정 완료", 1.0),
+    3: ("● ● ●", "모든 공정 완료",  1.0),
 }
 icon, label, prog = step_info.get(st.session_state.factory_step, ("○ ○ ○", "대기 중", 0.0))
 

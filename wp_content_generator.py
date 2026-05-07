@@ -366,8 +366,8 @@ def build_html(focus_kw: str, lsi: list, img1: dict, img2: dict, img3: dict) -> 
     parts.append(f'<h2 id="sec1" style="{H2_STYLE}">1. {focus_kw}의 법적 근거</h2>')
     parts.append(
         f'<p style="{P_STYLE}">{focus_kw}을 부과하는 핵심 조항은 '
-        f'<a href="https://www.law.go.kr/lsInfoP.do?lsiSeq=232737" target="_blank" '
-        f'rel="noopener nofollow" style="color:#2b6cb0;">도로교통법 제44조</a>와 '
+        f'<a href="https://www.law.go.kr/법령/도로교통법" target="_blank" '
+        f'rel="noopener" style="color:#2b6cb0;">도로교통법 제44조</a>와 '
         f'제148조의2입니다. 제44조 제1항은 "누구든지 술에 취한 상태에서 자동차등을 '
         f'운전하여서는 아니 된다"고 규정합니다.</p>'
     )
@@ -379,7 +379,7 @@ def build_html(focus_kw: str, lsi: list, img1: dict, img2: dict, img3: dict) -> 
     )
     parts.append(
         f'<p style="{P_STYLE}">처벌 수위는 제148조의2에 단계별로 명시되어 있고, '
-        f'<a href="https://glaw.scourt.go.kr/" target="_blank" rel="noopener nofollow" '
+        f'<a href="https://scourt.go.kr/scourt/index.html" target="_blank" rel="noopener" '
         f'style="color:#2b6cb0;">대법원 판례</a>를 통해 양형 기준이 누적되어 왔습니다.</p>'
     )
 
@@ -431,7 +431,7 @@ def build_html(focus_kw: str, lsi: list, img1: dict, img2: dict, img3: dict) -> 
     )
     parts.append(
         f'<p style="{P_STYLE}">예를 들어 형사재판에서 무죄 판결이 나오더라도 '
-        f'<a href="https://www.koroad.or.kr/" target="_blank" rel="noopener nofollow" '
+        f'<a href="https://www.koroad.or.kr/" target="_blank" rel="noopener" '
         f'style="color:#2b6cb0;">도로교통공단</a>이 진행한 면허취소가 자동으로 '
         f'복구되지 않습니다. 행정심판 또는 행정소송을 별도로 청구해야 합니다.</p>'
     )

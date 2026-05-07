@@ -426,7 +426,7 @@ def generate_ai_content(focus_kw: str, lsi: list, content_type: str) -> dict:
         },
         json={
             "model": "claude-sonnet-4-6",
-            "max_tokens": 4000,
+            "max_tokens": 8192,
             "temperature": 0.5,
             "system": system_prompt,
             "messages": [

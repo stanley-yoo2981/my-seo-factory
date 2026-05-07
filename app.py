@@ -9,7 +9,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # [!] 업데이트 확인용 태그
-BUILD_TAG = "V4.0-PROGRESS-EDITION"
+BUILD_TAG = "V4.1-NEWS-HOOK-EDITION"
 
 # 1. 인프라 및 경로 설정
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,8 +25,31 @@ if os.path.exists(os.path.join(PROJECT_DIR, ".env")):
 if "factory_step" not in st.session_state:
     st.session_state.factory_step = 1
 
+# IMAGES_ENABLED 초기값 — .env에 설정된 값 우선, 없으면 False
+if "images_enabled" not in st.session_state:
+    env_val = os.getenv("IMAGES_ENABLED", "false").strip().lower()
+    st.session_state.images_enabled = env_val in ("1", "true", "yes", "on")
+
 # 2. 페이지 세팅
 st.set_page_config(page_title="워드프레스 공장", layout="wide", initial_sidebar_state="collapsed")
+
+# ── 사이드바: DALL-E 이미지 생성 토글 ──────────────────────────────────
+with st.sidebar:
+    st.markdown("### ⚙️ 이미지 생성 설정")
+    images_enabled = st.toggle(
+        "DALL-E 이미지 생성",
+        value=st.session_state.images_enabled,
+        help=(
+            "켜면 DALL-E 3 이미지 3장을 생성하여 WordPress에 업로드합니다.\n"
+            "끄면 HTML 주석 플레이스홀더만 삽입하고 OpenAI 크레딧을 소비하지 않습니다."
+        ),
+    )
+    st.session_state.images_enabled = images_enabled
+    os.environ["IMAGES_ENABLED"] = "true" if images_enabled else "false"
+    if images_enabled:
+        st.success("✅ 이미지 생성 ON — DALL-E 크레딧 소모 주의")
+    else:
+        st.info("🚫 이미지 생성 OFF — 플레이스홀더 삽입")
 
 # 3. 🎨 Apple Glass UI
 st.markdown("""
@@ -305,7 +328,7 @@ def run_factory_script(filename, *args):
         # ── 실시간 프로그레스 바 + 단계 텍스트
         progress_bar = st.progress(0)
         status_text  = st.empty()
-        LOG_PATTERN  = re.compile(r"\[(\d+)/(\d+)\]\s*(.+)")
+        LOG_PATTERN  = re.compile(r"\[(\d+(?:\.\d+)?)/(\d+)\]\s*(.+)")
 
         for line in proc.stdout:
             stripped = line.strip()
@@ -318,7 +341,7 @@ def run_factory_script(filename, *args):
             # [N/M] 작업명 패턴 매칭 → 프로그레스 바 업데이트
             m = LOG_PATTERN.search(stripped)
             if m:
-                current   = int(m.group(1))
+                current   = float(m.group(1))
                 total     = int(m.group(2))
                 task_name = m.group(3).strip()
                 pct = min(current / total, 1.0)
@@ -337,7 +360,7 @@ def run_factory_script(filename, *args):
                     f"box-shadow:0 4px 16px rgba(80,60,120,0.07);'>"
                     f"⚙️ &nbsp;진행 중: {task_name} &nbsp;"
                     f"<span style='color:rgba(92,79,138,0.55);font-weight:500;'>"
-                    f"({current}/{total})</span></div>",
+                    f"({current:g}/{total})</span></div>",
                     unsafe_allow_html=True,
                 )
 

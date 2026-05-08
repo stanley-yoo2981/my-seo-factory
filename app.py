@@ -276,6 +276,14 @@ st.markdown("""
         color: #1d1d1f !important;
         font-family: 'Noto Sans KR', sans-serif !important;
     }
+            
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p,
+    [data-baseweb="radio"] div {
+        color: #3a3050 !important;
+        font-weight: 500 !important;
+    }
 
     /* ── 셀렉트박스 ── */
     [data-testid="stSelectbox"] > div {

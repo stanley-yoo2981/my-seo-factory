@@ -298,9 +298,21 @@ def wp_upload_media(local_path: str, title: str, alt: str,
 
 
 def wp_create_post(payload: dict) -> dict:
+    import json
+    
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    }
+    
+    # 1. 주소 끝에 슬래시(/)를 붙여 리다이렉트 방지
+    # 2. json= 대신 data=json.dumps()를 사용해 날것의 JSON 문자열로 강제 전송
     r = requests.post(
-        f"{WP_URL}/wp-json/wp/v2/posts",
-        json=payload, auth=wp_auth(), timeout=60,
+        f"{WP_URL}/wp-json/wp/v2/posts/",
+        headers=headers,
+        data=json.dumps(payload), 
+        auth=wp_auth(), 
+        timeout=60,
     )
     r.raise_for_status()
     return r.json()
